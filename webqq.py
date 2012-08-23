@@ -4,7 +4,7 @@
 #
 # gtalk/mail: maplebeats@gmail.com
 #
-# Last modified:	2012-08-20 11:40
+# Last modified:	2012-08-23 15:50
 #
 # Filename:		webqq.py
 #
@@ -16,7 +16,11 @@ import random,time
 import json,re,hashlib
 import threading
 
+import logging
+
 from bot import Bot
+
+from config import *
 
 class Webqq:
 
@@ -53,7 +57,11 @@ class Webqq:
         res = fp.read()
     return res
 
-  def __init__(self):
+  def __init__(self,user,passwd):
+
+    self.__qq = user
+    self.pswd = passwd
+
     self.cookieJar = cookiejar.CookieJar()
     self.opener = request.build_opener(request.HTTPCookieProcessor(self.cookieJar))
     self._headers = {
@@ -63,6 +71,7 @@ class Webqq:
                    "Connection":"keep-alive",
                    "Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=1003903&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20120619001"
     }
+
     self.clientid = "4646111"
     self._msgid = 60000000
     
@@ -85,12 +94,13 @@ class Webqq:
     urlv="http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s"%(self.__qq,self.passwd,self.__verifycode[1])+"&aid=567008010&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
     res = self._request(url = urlv)
     if res.find('登录成功') != -1:
-      print("sucess")
+      logger.info("login sucess")
     elif res.find('验证码不正确') != -1:
+      logger.warn('wrong verify')
       self._getverifycode()
       self._login()
     else:
-      print(res)
+      logger.error(res)
 
   def _poll(self):
     urlv = "http://d.web2.qq.com/channel/poll2"
@@ -111,8 +121,6 @@ class Webqq:
       self._poll()
   
   def connect(self):
-    self.__qq = "506024007"
-    self.pswd = "tianfengtian"
     self.__qq = self.__qq.strip()
     self.pswd = self.pswd.strip()
     self.__verifycode = self._getverifycode()
@@ -120,7 +128,8 @@ class Webqq:
       self.pswd,
       self.__verifycode
     )
-    print ("登录中...")
+
+    logger.info("loging...")
     self._login()
     
     self.cookies = dict([(x.name,x.value) for x in self.cookieJar])
@@ -135,9 +144,7 @@ class Webqq:
     res = self._request(urlv,data)
     data = json.loads(res)
 
-    self._login_info = {}
-    self._login_info.update({'psessionid':data['result']['psessionid']})
-    self._login_info.update({'vfwebqq':data['result']['vfwebqq']})
+    self._login_info = data['result']
 
     self._get_info()
     
@@ -156,9 +163,9 @@ class Webqq:
           tt = threading.Thread(target=self.send_user_msg,args=(from_uin,self._botmsg(content),))
           tt.start()
           if from_uin in self._user_info:
-            print('[%s]:%s' % (self._get_name(from_uin),content))
+            logger.info('[%s]:%s' % (self._get_name(from_uin),content))
           else:
-            print('[Somebody]:%s' % (content))
+            logger.info('[Somebody]:%s' % (content))
         elif poll_type == 'group_message' :
           from_uin = data['from_uin']
           groupname = self._get_name(from_uin)
@@ -167,7 +174,7 @@ class Webqq:
           username = self._get_name(send_uin)
           tt = threading.Thread(target=self.send_group_msg,args=(from_uin,self._botmsg(content),))
           tt.start()
-          print('[%s][%s]:%s' % (groupname,username,content))
+          logger.info('[%s][%s]:%s' % (groupname,username,content))
         else:
           pass
 
@@ -180,12 +187,21 @@ class Webqq:
     elif uin in self._group_info:
       return self._group_info[uin]
     else:
-      self._get_info()
-      self._get_name(uin)
+      logger.warn("can't find user's info")
 
   def _get_info(self):
-    self._user_info = {}
     self._group_info = {}
+    
+    urlv = "http://s.web2.qq.com/api/get_user_friends2"
+    status = {'h':'hello','vfwebqq':self._login_info['vfwebqq']}
+    data = {'r':json.dumps(status)}
+    res = self._request(urlv,data)
+    data = json.loads(res)
+    if data['retcode'] == 0:
+      self._user_info = dict([(x['uin'],x['nick']) for x in data['result']['info']])
+      logger.debug('fetch users info sucess')
+    else:
+      logger.error('fetch users info fail')
 
     urlv = "http://s.web2.qq.com/api/get_group_name_list_mask2"
     status = {"vfwebqq":self._login_info['vfwebqq']}
@@ -193,6 +209,7 @@ class Webqq:
     res = self._request(urlv,data)
     res = json.loads(res)
     if res['retcode']:
+      logger.warn("fetch group list fail,refetch!")
       self._get_info()
     else:
       data = res['result']['gnamelist']
@@ -201,28 +218,48 @@ class Webqq:
         urlv = "http://s.web2.qq.com/api/get_group_info_ext2?gcode=%s&vfwebqq=%s&t=%s" % (i['code'],self._login_info['vfwebqq'],random.randrange(1345457600000,1345458000000))
         res = self._request(urlv)
         data = json.loads(res)
-        self._user_info = dict([(x['uin'],x['nick']) for x in data['result']['minfo']])
+        self._user_info.update(dict([(x['uin'],x['nick']) for x in data['result']['minfo']]))
+        logger.debug("fetch %s's users info sucess" % i['name'])
 
   def send_user_msg(self,uin,msg="test"):
-    msg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
+    rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
     urlv = "http://d.web2.qq.com/channel/send_buddy_msg2"
-    status = {'to':uin,'face':180,'content':msg,'msg_id':self.msg_id(),'clientid':self.clientid,"psessionid":self._login_info['psessionid']}
+    status = {'to':uin,'face':180,'content':rmsg,'msg_id':self.msg_id(),'clientid':self.clientid,"psessionid":self._login_info['psessionid']}
     data = {'r':json.dumps(status),
             'clientid': self.clientid,
             'psessionid': self._login_info['psessionid']
     }
     res = self._request(urlv,data)
+    data = json.loads(res)
+    if data['retcode'] == 0:
+      logger.info("To [%s]-->%s" % (self._get_name(uin),msg))
+    else:
+      logger.warn("ReSend:%s" % msg)
+      self.send_user_msg(self,uin,msg)
 
   def send_group_msg(self,uin=None,msg="test"):
     urlv = "http://d.web2.qq.com/channel/send_qun_msg2"
-    msg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
-    status = {"group_uin":uin,"content":msg,"msg_id":self.msg_id(),"clientid":self.clientid,"psessionid":self._login_info['psessionid']}
+    rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
+    status = {"group_uin":uin,"content":rmsg,"msg_id":self.msg_id(),"clientid":self.clientid,"psessionid":self._login_info['psessionid']}
     data = {'r':json.dumps(status),
             'clientid': self.clientid,
             'psessionid':self._login_info['psessionid']
     }
     res = self._request(urlv,data)
+    data = json.loads(res)
+    if data['retcode'] == 0:
+      logger.info("To [%s]-->%s" % (self._get_name(uin),msg))
+    else:
+      logger.warn("ReSend:%s" % msg)
+      self.send_user_msg(self,uin,msg)
 
 if __name__ == "__main__":
-  test = Webqq()
-  test.connect()
+  logger = logging.getLogger()
+  formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+  hdlr = logging.StreamHandler()
+  hdlr.setFormatter(formatter)
+  logger.addHandler(hdlr)
+  logger.setLevel(logging.DEBUG)
+  qq = Webqq(qq_config['user'],qq_config['passwd'])
+  qq.connect()
+
