@@ -77,6 +77,8 @@ class Webqq:
     
     self.bot = Bot()
 
+  def msg_id(self): self._msgid += 1 ; return self._msgid
+
   def _getverifycode(self):
     urlv = 'http://check.ptlogin2.qq.com/check?uin=%s&appid=567008010&r=%s'%(self.__qq,random.Random().random())
     res = self._request(url = urlv)
@@ -150,8 +152,6 @@ class Webqq:
     
     self._poll()
 
-  def msg_id(self): self._msgid += 1 ; return self._msgid
-
   def message_received(self,msg):
     if msg['retcode'] == 0:
       for i in msg['result']:
@@ -159,17 +159,14 @@ class Webqq:
         data = i['value']
         if poll_type == 'message':
           from_uin = data['from_uin']
-          content = data['content'][1]
+          content = data['content'][1].replace('\r',',')
           tt = threading.Thread(target=self.send_user_msg,args=(from_uin,self._botmsg(content),))
           tt.start()
-          if from_uin in self._user_info:
-            logger.info('[%s]:%s' % (self._get_name(from_uin),content))
-          else:
-            logger.info('[Somebody]:%s' % (content))
-        elif poll_type == 'group_message' :
+          logger.info('[%s]:%s' % (self._get_name(from_uin),content))
+        elif poll_type == 'group_message':
           from_uin = data['from_uin']
           groupname = self._get_name(from_uin)
-          content = data['content'][1]
+          content = data['content'][1].replace('\r',',')
           send_uin = data['send_uin']
           username = self._get_name(send_uin)
           tt = threading.Thread(target=self.send_group_msg,args=(from_uin,self._botmsg(content),))
@@ -178,7 +175,7 @@ class Webqq:
         else:
           pass
 
-  def _botmsg(self,msg): return self.bot.get_msg(msg)
+  def _botmsg(self,msg): return self.bot.reply(msg)
 
   def _get_name(self,uin):
     '''<group> only,do not it use in <message>'''
@@ -219,7 +216,7 @@ class Webqq:
         res = self._request(urlv)
         data = json.loads(res)
         self._user_info.update(dict([(x['uin'],x['nick']) for x in data['result']['minfo']]))
-        logger.debug("fetch %s's users info sucess" % i['name'])
+        logger.debug("fetch <%s>'s users info sucess" % i['name'])
 
   def send_user_msg(self,uin,msg="test"):
     rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
@@ -232,7 +229,7 @@ class Webqq:
     res = self._request(urlv,data)
     data = json.loads(res)
     if data['retcode'] == 0:
-      logger.info("To [%s]-->%s" % (self._get_name(uin),msg))
+      logger.info("Reply[%s]-->%s" % (self._get_name(uin),msg))
     else:
       logger.warn("ReSend:%s" % msg)
       self.send_user_msg(self,uin,msg)
@@ -248,14 +245,14 @@ class Webqq:
     res = self._request(urlv,data)
     data = json.loads(res)
     if data['retcode'] == 0:
-      logger.info("To [%s]-->%s" % (self._get_name(uin),msg))
+      logger.info("Reply[%s]-->%s" % (self._get_name(uin),msg))
     else:
       logger.warn("ReSend:%s" % msg)
       self.send_user_msg(self,uin,msg)
 
 if __name__ == "__main__":
   logger = logging.getLogger()
-  formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+  formatter = logging.Formatter('%(levelname)s %(message)s')
   hdlr = logging.StreamHandler()
   hdlr.setFormatter(formatter)
   logger.addHandler(hdlr)
