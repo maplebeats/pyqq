@@ -15,6 +15,8 @@ from http import cookiejar
 import random,time
 import json,re,hashlib
 import threading
+#from io import StringIO
+import gzip
 
 import logging
 
@@ -51,10 +53,15 @@ class Webqq:
     else:
       rr = request.Request(url=url, headers=self._headers)
     with self.opener.open(rr) as fp:
-      try:
-        res = fp.read().decode('utf-8')
-      except:
-        res = fp.read()
+      if fp.info().get('Content-Encoding') == 'gzip':
+        f = gzip.decompress(fp.read())
+        res = f.decode('utf-8')
+      else:
+        try:
+          res = fp.read().decode('utf-8')
+        except:
+          res = fp.read()
+    #logger.debug(res)
     return res
 
   def __init__(self,user,passwd):
@@ -67,7 +74,7 @@ class Webqq:
     self._headers = {
                    "User-Agent":"Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1",
                    "Accept-Language":"zh-cn,en;q=0.8,en-us;q=0.5,zh-hk;q=0.3",
-                   "Accept-Encoding":"deflate",
+                   "Accept-Encoding":"gzip;deflate",
                    "Connection":"keep-alive",
                    "Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=1003903&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20120619001"
     }
@@ -159,14 +166,14 @@ class Webqq:
         data = i['value']
         if poll_type == 'message':
           from_uin = data['from_uin']
-          content = data['content'][1].replace('\r',',')
+          content = str(data['content'][1]).replace('\r',',')
           tt = threading.Thread(target=self.send_user_msg,args=(from_uin,self._botmsg(content),))
           tt.start()
           logger.info('[%s]:%s' % (self._get_name(from_uin),content))
         elif poll_type == 'group_message':
           from_uin = data['from_uin']
           groupname = self._get_name(from_uin)
-          content = data['content'][1].replace('\r',',')
+          content = str(data['content'][1]).replace('\r',',')
           send_uin = data['send_uin']
           username = self._get_name(send_uin)
           tt = threading.Thread(target=self.send_group_msg,args=(from_uin,self._botmsg(content),))
@@ -175,7 +182,7 @@ class Webqq:
         else:
           pass
 
-  def _botmsg(self,msg): return self.bot.reply(msg)
+  def _botmsg(self,msg): return str(self.bot.reply(msg))
 
   def _get_name(self,uin):
     '''<group> only,do not it use in <message>'''
@@ -188,14 +195,18 @@ class Webqq:
 
   def _get_info(self):
     self._group_info = {}
-    
+    self._user_info = {}
     urlv = "http://s.web2.qq.com/api/get_user_friends2"
     status = {'h':'hello','vfwebqq':self._login_info['vfwebqq']}
     data = {'r':json.dumps(status)}
     res = self._request(urlv,data)
     data = json.loads(res)
     if data['retcode'] == 0:
-      self._user_info = dict([(x['uin'],x['nick']) for x in data['result']['info']])
+      self._user_info.update(dict([(x['uin'],x['nick']) for x in data['result']['info']]))
+      try:
+        self._user_info.update(dict([(x['uin'],x['markname']) for x in data['result']['marknames']]))
+      except KeyError:
+        logger.warn('have no markname')
       logger.debug('fetch users info sucess')
     else:
       logger.error('fetch users info fail')
@@ -216,6 +227,10 @@ class Webqq:
         res = self._request(urlv)
         data = json.loads(res)
         self._user_info.update(dict([(x['uin'],x['nick']) for x in data['result']['minfo']]))
+        try:
+          self._user_info.update(dict([(x['muin'],x['card']) for x in data['result']['cards']]))
+        except KeyError:
+          logger.warn("the <%s> have no cards" % i['name'])
         logger.debug("fetch <%s>'s users info sucess" % i['name'])
 
   def send_user_msg(self,uin,msg="test"):
@@ -231,8 +246,7 @@ class Webqq:
     if data['retcode'] == 0:
       logger.info("Reply[%s]-->%s" % (self._get_name(uin),msg))
     else:
-      logger.warn("ReSend:%s" % msg)
-      self.send_user_msg(self,uin,msg)
+      logger.error("Replay send fail")
 
   def send_group_msg(self,uin=None,msg="test"):
     urlv = "http://d.web2.qq.com/channel/send_qun_msg2"
@@ -247,8 +261,7 @@ class Webqq:
     if data['retcode'] == 0:
       logger.info("Reply[%s]-->%s" % (self._get_name(uin),msg))
     else:
-      logger.warn("ReSend:%s" % msg)
-      self.send_user_msg(self,uin,msg)
+      logger.error("Replay send fail")
 
 if __name__ == "__main__":
   logger = logging.getLogger()

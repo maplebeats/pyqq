@@ -17,6 +17,8 @@ import json
 
 import re
 
+import sqlite3
+
 class Bot:
 
   def _request(self, url, data=None, opener=None):
