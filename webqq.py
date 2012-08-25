@@ -12,8 +12,8 @@
 #
 from urllib import parse,request
 from http import cookiejar
-import random,time
-import json,re,hashlib
+import random
+import json,hashlib
 import threading
 #from io import StringIO
 import gzip

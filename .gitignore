@@ -5,3 +5,4 @@
 __pycache__
 config.py
 test.py
+*.e4p
