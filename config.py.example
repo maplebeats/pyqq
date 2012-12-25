@@ -1,9 +1,0 @@
-#!/usr/bin/env python3
-
-qq_config = {
-  'user':'xxx',
-  'passwd':'xxxx',
-  'botenable': True
-}
-
-logfile = 'qq.log'

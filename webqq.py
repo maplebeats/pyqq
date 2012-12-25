@@ -15,14 +15,11 @@ from http import cookiejar
 import random
 import json,hashlib
 import threading
-#from io import StringIO
 import gzip
 
 import logging
 
 from bot import Bot
-
-from config import *
 
 class Webqq:
 
@@ -270,6 +267,12 @@ if __name__ == "__main__":
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
     logger.setLevel(logging.DEBUG)
-    qq = Webqq(qq_config['user'],qq_config['passwd'])
+    from configparser import ConfigParser
+    config = ConfigParser()
+    CONFIGFILE = "config.ini"
+    config.read(CONFIGFILE)
+    account = config.get('account','qq')
+    passwd = config.get('account','pw')
+    qq = Webqq(account,passwd)
     qq.connect()
 
