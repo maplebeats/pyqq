@@ -78,8 +78,6 @@ class QQlogin:
             "Connection":"keep-alive",
             "Referer":"http://web.qq.com"
         }
-        self._verifycode = self._getverifycode()
-        self.pswd = self._preprocess(self.__pw, self._verifycode) ##processed password
 
     def _getverifycode(self):
         url = 'http://check.ptlogin2.qq.com/check?uin=%s&appid=%s&r=%s'%(self.qq, self.appid, random.Random().random())

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-from qqlogin import QQlogin
+from qqlogin import QQlogin,COOKIE
 import logging
-
-COOKIEFILE="cookie"
 
 logger = logging.getLogger()
 formatter = logging.Formatter('%(levelname)s %(message)s')
@@ -20,12 +18,14 @@ class Webqq(QQlogin):
         self.cookies={} #{k:v}
     
     def login(self):
-        url = "http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s&aid=%s"%(self.qq,self.__pw,self._verifycode[1],self.appid)\
-        + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
-        self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"}) #todo
         if os.path.isfile(COOKIE): #use saved cookie
             self.cookieJar.load(COOKIE)
         else:
+            self._verifycode = self._getverifycode()
+            self.pswd = self._preprocess(self.__pw, self._verifycode) ##processed password
+            self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"}) #todo
+            url = "http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s&aid=%s"%(self.qq,self.pswd,self._verifycode[1],self.appid)\
+            + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
             res = self._request(url=url, cookie=True)
             if res.find("登陆成功") != -1:
                 logger.debug(res)
