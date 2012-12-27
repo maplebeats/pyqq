@@ -1,4 +1,4 @@
-pyqq
+QQ
 ====
 
-python web qq
+python web qq lib

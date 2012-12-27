@@ -6,3 +6,6 @@ __pycache__
 config.py
 test.py
 *.e4p
+config.ini
+verify.jpg
+.*
