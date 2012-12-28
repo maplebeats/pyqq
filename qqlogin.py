@@ -8,21 +8,45 @@ import gzip
 import os
 
 COOKIE="cookie.txt"
-IMG="verify.jpg"
+IMG="verify.png"
 
-def viewimg():
-    """
-    TODO
-    """
-    from http.server import SimpleHTTPRequestHandler,HTTPServer
-    import time
-    server_address = ('', 8000)
-    httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
-    print("open http://localhost:8000/%s"%(IMG))
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        httpd.serve_close()
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+
+from pprint import pprint
+
+class VHTTPhandler(SimpleHTTPRequestHandler):
+
+    def do_GET(self):
+        path = self.translate_path(IMG)
+        try:
+            f = open(path,"rb")
+        except FileNotFoundError:
+            self.send_error(404, "Not file verify")
+        self.send_response(200)
+        self.send_header("Content-type","image/png")
+        fs = os.fstat(f.fileno())
+        self.send_header("Content-Length", str(fs[6]))
+        self.send_header("Last-Modified",self.date_time_string(fs.st_mtime))
+        self.end_headers()
+        self.copyfile(f, self.wfile)
+        f.close()
+        ViewVerify.stop()
+
+
+class ViewVerify():
+
+    @classmethod
+    def start(cls):
+        cls.httpd = HTTPServer(('',8000), VHTTPhandler)
+        print("please open http://localhost:8000/%s"%(IMG)) #TODO
+        try:
+            cls.httpd.serve_forever()
+        except ValueError:
+            pass
+
+    @classmethod
+    def stop(cls):
+        cls.httpd.server_close()
 
 class QQlogin:
 
@@ -46,7 +70,7 @@ class QQlogin:
             return hashlib.md5(s).hexdigest().upper()
 
     def _request(self, url, data=None, cookie=False):
-        print(url)
+        pprint("URL:"+url)
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -61,8 +85,11 @@ class QQlogin:
                     res = fp.read().decode('utf-8')
                 except:
                     res = fp.read()
+            if fp.info().get('Content-Type') == 'application/json':
+                res = json.loads(res) #TODO
             if cookie:
                 self.cookieJar.save(COOKIE)
+        pprint(type(res)+"!!!RES!!!"+res)
         return res
     
     def __init__(self, qq, pw):
@@ -88,7 +115,7 @@ class QQlogin:
             img = "http://captcha.qq.com/getimage?aid=%s&r=%s&uin=%s"%(self.appid, random.Random().random(), self.qq)
             with open(IMG,"wb") as f:
                 f.write(request.urlopen(img).read())
-            viewimg() # via web browser
+            ViewVerify.start()
             verify[1] = input("验证码:").strip()
         return verify
 
@@ -96,8 +123,9 @@ class QQlogin:
         """
         login webqq
         """
-        from pprint import pprint
-        self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"}) #todo
+        self._verifycode = self._getverifycode()
+        self.pswd = self._preprocess(self.__pw, self._verifycode) 
+        self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"})
         url = "http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s&aid=%s"%(self.qq,self.pswd,self._verifycode[1],self.appid)\
         + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
         res = self._request(url=url)
@@ -110,7 +138,6 @@ class QQlogin:
         else:
             pprint(res)
 if __name__ == "__main__":
-    import sys
     from config import getconfig
     c = getconfig()
     q = QQlogin(c[0],c[1])

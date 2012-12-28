@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from qqlogin import QQlogin,COOKIE
+from qqlogin import QQlogin, COOKIE
+import threading
 import logging
 
 logger = logging.getLogger()
@@ -13,17 +14,19 @@ logger.setLevel(logging.DEBUG)
 class Webqq(QQlogin):
 
     def __init__(self, qq, pw):
-        super(Webqq, self).__init__(qq,pw) ##is that true?
+        super(Webqq, self).__init__(qq, pw) 
         self.msgid = 60000000
-        self.cookies={} #{k:v}
+        self.clientid = "4646111"
+        self.cookies = {} 
+        self._login_info = {}
     
     def login(self):
-        if os.path.isfile(COOKIE): #use saved cookie
+        if os.path.isfile(COOKIE): 
             self.cookieJar.load(COOKIE)
         else:
             self._verifycode = self._getverifycode()
-            self.pswd = self._preprocess(self.__pw, self._verifycode) ##processed password
-            self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"}) #todo
+            self.pswd = self._preprocess(self.__pw, self._verifycode)
+            self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"})
             url = "http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s&aid=%s"%(self.qq,self.pswd,self._verifycode[1],self.appid)\
             + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
             res = self._request(url=url, cookie=True)
@@ -36,8 +39,74 @@ class Webqq(QQlogin):
             else:
                 logger.error(res)
         self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
+        self._login_info = self.get_login_info()
 
+    def get_login_info(self):
+        url = "http://d.web2.qq.com/channel/login2"
+        self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
+        status = {'status':'online',
+            'ptwebqq':self.cookies['ptwebqq'],
+            'passwd_sig':'',
+            'clientid':self.clientid,
+            'psessionid':'null'
+            }
+        data = {'r':json.dumps(status),
+            'clientid' : self.clientid,
+            'psessionid':	'null'
+            }
+        res = self._request(url, data)
+        #@res check TODO
+        return res['result']
+        
     def __poll(self):
         url = "http://d.web2.qq.com/channel/poll2"
         self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
+        status = {'clientid':self.clientid,
+            'psessionid':self._login_info['psessionid']
+            }
+        data = {'r':json.dumps(status),
+            'clientid' : self.clientid,
+            'psessionid':	'null'
+            }
+        res = self._request(url=url, data=data)
+        self._pollhandler(res)
+        poll = threading.Timer(0.5, self._poll)
+        poll.start()
+
+    def _pollhandler(self, data):
         pass
+
+    def msg_id(self):
+        self.msgid += 1
+        return self.msgid
+
+    def send_user_msg(self, uin=None, msg="send user msg"):
+        rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
+        url = "http://d.web2.qq.com/channel/send_buddy_msg2"
+        status = {'to':uin,
+            'face':180,
+            'content':rmsg,
+            'msg_id':self.msg_id(),
+            'clientid':self.clientid,
+            "psessionid":self._login_info['psessionid']
+            }
+        data = {'r':json.dumps(status),
+            'clientid': self.clientid,
+            'psessionid': self._login_info['psessionid']
+        }
+        res = self._request(url, data)
+
+    def send_group_msg(self, uin=None, msg="send group msg"):
+        rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
+        url = "http://d.web2.qq.com/channel/send_qun_msg2"
+        status = {"group_uin":uin,
+            "content":rmsg,
+            "msg_id":self.msg_id(),
+            "clientid":self.clientid,
+            "psessionid":self._login_info['psessionid']
+            }
+        data = {'r':json.dumps(status),
+            'clientid': self.clientid,
+            'psessionid':self._login_info['psessionid']
+        }
+        res = self._request(url, data)
