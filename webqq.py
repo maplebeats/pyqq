@@ -139,6 +139,7 @@ class Webqq(QQlogin):
         return res
 
 if __name__ == "__main__":
-    
-    qq = Webqq("506024007","tianfengtian")
+    from config import getconfig
+    c = getconfig()
+    qq = Webqq(c[0],c[1])
     qq.login()
