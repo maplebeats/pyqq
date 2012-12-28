@@ -71,6 +71,7 @@ class QQlogin:
 
     def _request(self, url, data=None, cookie=False):
         pprint("URL<--"+url)
+        pprint("DATA<--"+str(data))
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -85,23 +86,25 @@ class QQlogin:
                     res = fp.read().decode('utf-8')
                 except:
                     res = fp.read()
-            if fp.info().get('Content-Type') == 'application/json;charset=utf-8':
+            if fp.info().get('Content-Type') == 'text/plain; charset=utf-8':
                 res = json.loads(res)
-                if res['retcode'] == '0':
+                if res['retcode'] == 0:
                     res = res['result']
-                else
-                    pprint("Request"+url+"fail!")
-                    res = None
+                elif res['retcode'] == 103:
+                    os.remove(COOKIE)
+                    pass
+                else:
+                    pprint("ERROR:"+url)
             if cookie:
-                self.cookieJar.save(COOKIE)
-        pprint(type(res)+"!!!RES!!!"+res)
+                self.cookieJar.save(ignore_discard=True, ignore_expires=True)
+        pprint("RES-->"+str(res))
         return res
     
     def __init__(self, qq, pw):
         self.qq = qq
-        self.__pw = pw
+        self._pw = pw
         self.appid = "2001601"
-        self.cookieJar = cookiejar.LWPCookieJar()
+        self.cookieJar = cookiejar.MozillaCookieJar(COOKIE)
         self.opener = request.build_opener(request.HTTPCookieProcessor(self.cookieJar))
         self._headers = {
             "User-Agent":"Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1",
@@ -129,7 +132,7 @@ class QQlogin:
         login webqq
         """
         self._verifycode = self._getverifycode()
-        self.pswd = self._preprocess(self.__pw, self._verifycode) 
+        self.pswd = self._preprocess(self._pw, self._verifycode) 
         self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"})
         url = "http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s&aid=%s"%(self.qq,self.pswd,self._verifycode[1],self.appid)\
         + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
