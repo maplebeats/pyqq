@@ -70,7 +70,7 @@ class QQlogin:
             return hashlib.md5(s).hexdigest().upper()
 
     def _request(self, url, data=None, cookie=False):
-        pprint("URL:"+url)
+        pprint("URL<--"+url)
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -96,7 +96,7 @@ class QQlogin:
         self.qq = qq
         self.__pw = pw
         self.appid = "2001601"
-        self.cookieJar = cookiejar.LWPCookieJar()#cookiejar.CookieJar()
+        self.cookieJar = cookiejar.LWPCookieJar()
         self.opener = request.build_opener(request.HTTPCookieProcessor(self.cookieJar))
         self._headers = {
             "User-Agent":"Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1",
@@ -109,7 +109,7 @@ class QQlogin:
     def _getverifycode(self):
         url = 'http://check.ptlogin2.qq.com/check?uin=%s&appid=%s&r=%s'%(self.qq, self.appid, random.Random().random())
         res = self._request(url = url)
-        verify =  eval(res.split("(")[1].split(")")[0])
+        verify =  eval(res.split("(")[1].split(")")[0])  #TODO
         verify = list(verify)
         if verify[0] == '1':
             img = "http://captcha.qq.com/getimage?aid=%s&r=%s&uin=%s"%(self.appid, random.Random().random(), self.qq)
@@ -137,6 +137,7 @@ class QQlogin:
             self.test()
         else:
             pprint(res)
+
 if __name__ == "__main__":
     from config import getconfig
     c = getconfig()

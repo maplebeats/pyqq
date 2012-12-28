@@ -3,6 +3,7 @@
 from qqlogin import QQlogin, COOKIE
 import threading
 import logging
+import os
 
 logger = logging.getLogger()
 formatter = logging.Formatter('%(levelname)s %(message)s')
@@ -19,6 +20,8 @@ class Webqq(QQlogin):
         self.clientid = "4646111"
         self.cookies = {} 
         self._login_info = {}
+        self._user_info = {}
+        self._group_info = {}
     
     def login(self):
         if os.path.isfile(COOKIE): 
@@ -57,6 +60,22 @@ class Webqq(QQlogin):
         res = self._request(url, data)
         #@res check TODO
         return res['result']
+
+    def get_user_info(self):
+        url = "http://s.web2.qq.com/api/get_user_friends2"
+        status = {'h':'hello',
+            'vfwebqq':self._login_info['vfwebqq']
+            }
+        data = {'r':json.dumps(status)}
+        res = self._request(url, data)
+        pass
+
+    def get_group_info(self):
+        url = "http://s.web2.qq.com/api/get_group_name_list_mask2"
+        status = {"vfwebqq":self._login_info['vfwebqq']}
+        data = {'r':json.dumps(status)}
+        res = self._request(url, data)
+        pass
         
     def __poll(self):
         url = "http://d.web2.qq.com/channel/poll2"
@@ -72,6 +91,7 @@ class Webqq(QQlogin):
         self._pollhandler(res)
         poll = threading.Timer(0.5, self._poll)
         poll.start()
+        pass
 
     def _pollhandler(self, data):
         pass
@@ -95,6 +115,7 @@ class Webqq(QQlogin):
             'psessionid': self._login_info['psessionid']
         }
         res = self._request(url, data)
+        pass
 
     def send_group_msg(self, uin=None, msg="send group msg"):
         rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
@@ -110,3 +131,4 @@ class Webqq(QQlogin):
             'psessionid':self._login_info['psessionid']
         }
         res = self._request(url, data)
+        pass
