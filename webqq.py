@@ -58,8 +58,7 @@ class Webqq(QQlogin):
             'psessionid':	'null'
             }
         res = self._request(url, data)
-        #@res check TODO
-        return res['result']
+        return res
 
     def get_user_info(self):
         url = "http://s.web2.qq.com/api/get_user_friends2"
@@ -68,15 +67,15 @@ class Webqq(QQlogin):
             }
         data = {'r':json.dumps(status)}
         res = self._request(url, data)
-        pass
+        return res
 
     def get_group_info(self):
         url = "http://s.web2.qq.com/api/get_group_name_list_mask2"
         status = {"vfwebqq":self._login_info['vfwebqq']}
         data = {'r':json.dumps(status)}
         res = self._request(url, data)
-        pass
-        
+        return res
+
     def __poll(self):
         url = "http://d.web2.qq.com/channel/poll2"
         self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
@@ -115,7 +114,7 @@ class Webqq(QQlogin):
             'psessionid': self._login_info['psessionid']
         }
         res = self._request(url, data)
-        pass
+        return res
 
     def send_group_msg(self, uin=None, msg="send group msg"):
         rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
@@ -131,4 +130,4 @@ class Webqq(QQlogin):
             'psessionid':self._login_info['psessionid']
         }
         res = self._request(url, data)
-        pass
+        return res

@@ -85,8 +85,13 @@ class QQlogin:
                     res = fp.read().decode('utf-8')
                 except:
                     res = fp.read()
-            if fp.info().get('Content-Type') == 'application/json':
-                res = json.loads(res) #TODO
+            if fp.info().get('Content-Type') == 'application/json;charset=utf-8':
+                res = json.loads(res)
+                if res['retcode'] == '0':
+                    res = res['result']
+                else
+                    pprint("Request"+url+"fail!")
+                    res = None
             if cookie:
                 self.cookieJar.save(COOKIE)
         pprint(type(res)+"!!!RES!!!"+res)
@@ -109,7 +114,7 @@ class QQlogin:
     def _getverifycode(self):
         url = 'http://check.ptlogin2.qq.com/check?uin=%s&appid=%s&r=%s'%(self.qq, self.appid, random.Random().random())
         res = self._request(url = url)
-        verify =  eval(res.split("(")[1].split(")")[0])  #TODO
+        verify =  eval(res.split("(")[1].split(")")[0])
         verify = list(verify)
         if verify[0] == '1':
             img = "http://captcha.qq.com/getimage?aid=%s&r=%s&uin=%s"%(self.appid, random.Random().random(), self.qq)
