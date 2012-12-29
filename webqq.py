@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Author: maplebeats
+# gtalk/mail: maplebeats@gmail.com
 
 from qqlogin import QQlogin, COOKIE
 import threading
@@ -95,11 +97,11 @@ class Webqq(QQlogin):
             }
         res = self._request(url=url, data=data)
         if res:
-            self._pollhandler(res)
+            self.pollhandler(res)
         poll = threading.Timer(0, self.__poll)
         poll.start()
 
-    def _pollhandler(self, data):
+    def pollhandler(self, data):
         """
         'poll_type': 'buddies_status_change'
         """

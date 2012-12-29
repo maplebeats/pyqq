@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Author: maplebeats
+# gtalk/mail: maplebeats@gmail.com
 
 from urllib import parse,request
 from http import cookiejar

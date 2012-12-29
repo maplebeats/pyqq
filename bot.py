@@ -1,23 +1,12 @@
 #!/usr/bin/env python3
-#
 # Author: maplebeats
-#
 # gtalk/mail: maplebeats@gmail.com
-#
-# Last modified:	2012-08-23 18:41
-#
-# Filename:		bot.py
-#
-# Description: SB机器人
-#
 
 from urllib import request,parse
 from http import cookiejar
 import json
-
+from webqq import Webqq
 import re
-
-#import sqlite3
 
 class Bot:
 
@@ -36,20 +25,13 @@ class Bot:
 
     def __init__(self):
         self.simi_init()
-        self.link = re.compile(r'[http://|\w*\.]?.*\.\w{2,4}[^\w]+')
 
     def reply(self,req):
-        l = self.link.search(req)
-        if l:
-            return l.group(0)
-        else:
-            return self.simi_bot(req) or self.hito_bot()
 
-    @staticmethod
-    def gettitle(link):
-        pass
+        return self.simi_bot(req) or self.hito_bot()
 
     def simi_init(self):
+
         simi_Jar = cookiejar.CookieJar()
         self.simi_opener = request.build_opener(request.HTTPCookieProcessor(simi_Jar))
         self._headers = {
@@ -58,13 +40,13 @@ class Bot:
                          "Accept-Encoding":"deflate",
                          "Referer":"http://www.simsimi.com/talk.htm"
         }
-        urlv = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": "hi", "lc": "zh"})
-        self._request(url=urlv,opener=self.simi_opener)
+        url = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": "hi", "lc": "zh"})
+        self._request(url=url, opener=self.simi_opener)
 
-    def simi_bot(self,req):
-        urlv = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": req, "lc": "zh"})
-        res = self._request(urlv,opener=self.simi_opener)
-        if res =="{}":
+    def simi_bot(self, req):
+        url = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": req, "lc": "zh"})
+        res = self._request(url, opener=self.simi_opener)
+        if res == "{}":
             return False
         else:
             return json.loads(res)['response']
@@ -74,3 +56,18 @@ class Bot:
         res = request.urlopen(urlv).read().decode()
         hit = json.loads(res)
         return hit['hitokoto']
+
+
+class Qbot(Webqq):
+
+    def __init__(self, qq, ps):
+        super(Webqq, self).__init__(qq, ps)
+        self.bot = Bot()
+
+    def pollhander(self, data):
+        pass
+        
+
+if __name__ == "__main__":
+    b = Bot()
+    b.reply("test")
