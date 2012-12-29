@@ -4,9 +4,9 @@
 
 from qqlogin import QQlogin, COOKIE
 import threading
-import logging
 import os
 import json
+from pprint import pprint
 
 class Webqq(QQlogin):
 
@@ -58,7 +58,7 @@ class Webqq(QQlogin):
             'psessionid':	'null'
             }
         res = self._request(url, data)
-        if not os.path.isfile:  #cookie timeout
+        if not os.path.isfile(COOKIE):  #cookie timeout
             self.login()
         return res
 
@@ -90,24 +90,27 @@ class Webqq(QQlogin):
             }
         res = self._request(url=url, data=data)
         if res:
-            self.pollhandler(res)
+            tt = threading.Thread(target=self.__pollhandler, args=[res])
+            tt.start()
         poll = threading.Timer(0, self.__poll)
         poll.start()
 
-    def pollhandler(self, data):
-        """
-        'poll_type': 'buddies_status_change'
-        """
+    def __pollhandler(self, data):
         for i in data:
             pt = i['poll_type']
             va = i['value']
             if pt == 'message':
-                self.send_user_msg(va['from_uin'])
+                self.userhandler(va)
             elif pt == 'group_message':
-                self.send_group_msg(va['from_uin'])
+                self.grouphandler(va)
             else:
                 pass
 
+    def grouphandler(self, data):
+        self.send_group_msg(data['from_uin'])
+
+    def userhandler(self, data):
+        self.send_user_msg(data['from_uin'])
 
     def msg_id(self):
         self.msgid += 1

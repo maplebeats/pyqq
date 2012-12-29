@@ -7,13 +7,15 @@ from http import cookiejar
 import json
 from webqq import Webqq
 import re
+import threading
+from pprint import pprint
 
 class Bot:
 
     def _request(self, url, data=None, opener=None):
         if data:
             data = parse.urlencode(data).encode('utf-8')
-            rr = request.Request(url,data,self._headers)
+            rr = request.Request(url, data, self._headers)
         else:
             rr = request.Request(url=url, headers=self._headers)
         with opener.open(rr) as fp:
@@ -27,7 +29,6 @@ class Bot:
         self.simi_init()
 
     def reply(self,req):
-
         return self.simi_bot(req) or self.hito_bot()
 
     def simi_init(self):
@@ -44,6 +45,7 @@ class Bot:
         self._request(url=url, opener=self.simi_opener)
 
     def simi_bot(self, req):
+        req = req.replace("%","+") #%bug TODO
         url = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": req, "lc": "zh"})
         res = self._request(url, opener=self.simi_opener)
         if res == "{}":
@@ -61,13 +63,20 @@ class Bot:
 class Qbot(Webqq):
 
     def __init__(self, qq, ps):
-        super(Webqq, self).__init__(qq, ps)
+        super(Qbot, self).__init__(qq, ps)
         self.bot = Bot()
 
-    def pollhander(self, data):
+    def grouphandler(self, data):
+        re = self.bot.reply(data['content'][1])
+        self.send_group_msg(data['from_uin'], re)
         pass
-        
+    def userhandler(self, data):
+        re = self.bot.reply(data['content'][1])
+        self.send_user_msg(data['from_uin'], re)
+        pass
 
 if __name__ == "__main__":
-    b = Bot()
-    b.reply("test")
+    from config import getconfig
+    c = getconfig()
+    qq = Qbot(c[0],c[1])
+    qq.login()
