@@ -8,13 +8,19 @@ import random
 import json,hashlib
 import gzip
 import os
+import logging
 
 COOKIE="cookie.txt"
 IMG="verify.png"
+logger = logging.getLogger()
+formatter = logging.Formatter('%(levelname)s %(message)s')
+hdlr = logging.StreamHandler()
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.DEBUG)
+
 
 from http.server import SimpleHTTPRequestHandler, HTTPServer
-
-from pprint import pprint
 
 class VHTTPhandler(SimpleHTTPRequestHandler):
 
@@ -72,8 +78,8 @@ class QQlogin:
             return hashlib.md5(s).hexdigest().upper()
 
     def _request(self, url, data=None, cookie=False):
-        pprint("URL<--"+url)
-        pprint("DATA<--"+str(data))
+        logger.debug("URL<--"+url)
+        logger.debug("DATA<--"+str(data))
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -97,10 +103,10 @@ class QQlogin:
                 elif res['retcode'] == 102: #heart
                     res = None
                 else:
-                    pprint("ERROR:"+url)
+                    logger.error("ERROR:"+url)
             if cookie:
                 self.cookieJar.save(ignore_discard=True, ignore_expires=True)
-        pprint("RES-->"+str(res))
+        logger.debug("RES-->"+str(res))
         return res
     
     def __init__(self, qq, pw):
@@ -141,13 +147,13 @@ class QQlogin:
         + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
         res = self._request(url=url)
         if res.find("登陆成功") != -1:
-            pprint("登陆成功")
+            logger.log("登陆成功")
         elif res.find("验证码不正确") != -1:
-            pprint("验证码错误")
+            logger.error("验证码错误")
             self._getverifycode()
             self.test()
         else:
-            pprint(res)
+            logger.error(res)
 
 if __name__ == "__main__":
     from config import getconfig

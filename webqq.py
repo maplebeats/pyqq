@@ -8,13 +8,6 @@ import logging
 import os
 import json
 
-logger = logging.getLogger()
-formatter = logging.Formatter('%(levelname)s %(message)s')
-hdlr = logging.StreamHandler()
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
-
 class Webqq(QQlogin):
 
     def __init__(self, qq, pw):
@@ -39,11 +32,11 @@ class Webqq(QQlogin):
             if res.find("成功") != -1:
                 pass
             elif res.find("验证码") != -1:
-                logger.error("验证码错误")
+                print("验证码错误")
                 self._getverifycode()
                 self.login()
             else:
-                logger.error(res)
+                print(res)
                 raise Exception("登陆错误")
         self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
         self._login_info = self.get_login_info()
