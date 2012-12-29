@@ -92,7 +92,8 @@ class QQlogin:
                     res = res['result']
                 elif res['retcode'] == 103:
                     os.remove(COOKIE)
-                    pass
+                elif res['retcode'] == 102: #heart
+                    res = None
                 else:
                     pprint("ERROR:"+url)
             if cookie:

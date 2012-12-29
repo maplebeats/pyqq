@@ -94,19 +94,32 @@ class Webqq(QQlogin):
             'psessionid':	'null'
             }
         res = self._request(url=url, data=data)
-        self._pollhandler(res)
-        poll = threading.Timer(0.5, self.__poll)
+        if res:
+            self._pollhandler(res)
+        poll = threading.Timer(0, self.__poll)
         poll.start()
 
     def _pollhandler(self, data):
-        pass
+        """
+        'poll_type': 'buddies_status_change'
+        """
+        for i in data:
+            pt = i['poll_type']
+            va = i['value']
+            if pt == 'message':
+                self.send_user_msg(va['from_uin'])
+            elif pt == 'group_message':
+                self.send_group_msg(va['from_uin'])
+            else:
+                pass
+
 
     def msg_id(self):
         self.msgid += 1
         return self.msgid
 
     def send_user_msg(self, uin=None, msg="send user msg"):
-        rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
+        rmsg = '["'+msg+'",["font",{"name":"宋体","size":"13","style":[0,0,0],"color":"000000"}]]'
         url = "http://d.web2.qq.com/channel/send_buddy_msg2"
         status = {'to':uin,
             'face':180,
@@ -123,7 +136,7 @@ class Webqq(QQlogin):
         return res
 
     def send_group_msg(self, uin=None, msg="send group msg"):
-        rmsg = "[\""+msg+"\",[\"font\",{\"name\":\"宋体\",\"size\":\"13\",\"style\":[0,0,0],\"color\":\"000000\"}]]"
+        rmsg = '["'+msg+'",["font",{"name":"宋体","size":"13","style":[0,0,0],"color":"000000"}]]'
         url = "http://d.web2.qq.com/channel/send_qun_msg2"
         status = {"group_uin":uin,
             "content":rmsg,
