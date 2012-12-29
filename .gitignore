@@ -3,7 +3,6 @@
 *.swp
 *.log
 __pycache__
-config.py
 test.py
 *.e4p
 config.ini
