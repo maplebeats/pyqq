@@ -96,12 +96,16 @@ class QQlogin:
                     res = fp.read()
             if fp.info().get('Content-Type') == 'text/plain; charset=utf-8':
                 res = json.loads(res)
-                if res['retcode'] == 0:
+                if res['retcode'] == 0: #success
                     res = res['result']
-                elif res['retcode'] == 103:
+                elif res['retcode'] == 103: #cookie was timeout
                     os.remove(COOKIE)
-                elif res['retcode'] == 102: #heart
+                elif res['retcode'] == 102: #ok
                     res = None
+                elif res['retcode'] == 114: #send msg fail TODO:retry
+                    res = None
+                elif res['retcode'] == 116: #update ptwebqq value
+                    res = [res.update({"poll_type":"ptwebqq"})]
                 else:
                     logger.error("ERROR:"+url)
             if cookie:

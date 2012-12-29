@@ -94,8 +94,13 @@ class Webqq(QQlogin):
             tt.start()
         poll = threading.Timer(0, self.__poll)
         poll.start()
-
+    
     def __pollhandler(self, data):
+        """
+        buddies_status_change 
+        message 
+        kick_message
+        """
         for i in data:
             pt = i['poll_type']
             va = i['value']
@@ -103,6 +108,8 @@ class Webqq(QQlogin):
                 self.userhandler(va)
             elif pt == 'group_message':
                 self.grouphandler(va)
+            elif pt == 'ptwebqq': #TODO update cookie's file value
+                self.cookie.update({'ptwebqq':i['p']})
             else:
                 pass
 
