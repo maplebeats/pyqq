@@ -77,7 +77,8 @@ class QQlogin:
             return hashlib.md5(s).hexdigest().upper()
 
     def _request(self, url, data=None, cookie=False):
-        logger.debug(url,data)
+        logger.debug(data)
+        logger.debug(url)
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -106,6 +107,7 @@ class QQlogin:
                     res = tuple([res.update({"poll_type":"ptwebqq"})])
                 else:
                     logger.error(url)
+                    res = None
             if cookie:
                 self.cookieJar.save(ignore_discard=True, ignore_expires=True)
         logger.debug(res)

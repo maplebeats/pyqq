@@ -36,7 +36,7 @@ class Webqq(QQlogin):
                 self._getverifycode()
                 self.login()
             else:
-                print(res)
+                pprint(res)
                 raise Exception("登陆错误")
         self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
         self._login_info = self.get_login_info()
@@ -90,19 +90,14 @@ class Webqq(QQlogin):
             }
         res = self._request(url=url, data=data)
         if res:
-            ph = threading.Thread(target=self.__pollhandler, args=[res])
+            ph = threading.Thread(target=self.__pollhandler, args=(res,))
             ph.start()
         poll = threading.Thread(target=self.__poll)
         poll.start()
     
     def __pollhandler(self, data):
-        """
-        buddies_status_change 
-        message 
-        kick_message
-        """
-        if data:
-            for i in data:
+        for i in data:
+            if i:
                 pt = i['poll_type']
                 va = i['value']
                 if pt == 'message':
@@ -111,6 +106,11 @@ class Webqq(QQlogin):
                     self.grouphandler(va)
                 elif pt == 'ptwebqq': #TODO update cookie's file value
                     self.cookie.update({'ptwebqq':i['p']})
+                elif pt == 'buddies_status_change':
+                    pass #TODO
+                elif pt == 'kick_message':
+                    os.remove(COOKIE)
+                    raise Exception("被下线")
                 else:
                     pass
 

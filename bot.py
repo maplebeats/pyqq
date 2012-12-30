@@ -9,7 +9,7 @@ from webqq import Webqq
 import re
 import threading
 from pprint import pprint
-import sqlite3
+#import sqlite3
 
 class Bot:
 
@@ -28,6 +28,11 @@ class Bot:
 
     def __init__(self):
         self.simi_init()
+        self.link = re.compile(r'[a-z]')
+
+    def gettitle(url):
+        re = request.urlopen(url).read(1024)
+        pass
 
     def reply(self, req):
         if req.find('%') == -1:
