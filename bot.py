@@ -9,6 +9,7 @@ from webqq import Webqq
 import re
 import threading
 from pprint import pprint
+import sqlite3
 
 class Bot:
 
@@ -28,11 +29,13 @@ class Bot:
     def __init__(self):
         self.simi_init()
 
-    def reply(self,req):
-        return self.simi_bot(req) or self.hito_bot()
+    def reply(self, req):
+        if req.find('%') == -1:
+            return self.simi_bot(req) or self.hito_bot()
+        else:
+            return self.hito_bot()
 
     def simi_init(self):
-
         simi_Jar = cookiejar.CookieJar()
         self.simi_opener = request.build_opener(request.HTTPCookieProcessor(simi_Jar))
         self._headers = {
@@ -45,7 +48,9 @@ class Bot:
         self._request(url=url, opener=self.simi_opener)
 
     def simi_bot(self, req):
-        req = req.replace("%","+") #%bug TODO
+        """
+        req could not have % ...
+        """
         url = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": req, "lc": "zh"})
         res = self._request(url, opener=self.simi_opener)
         if res == "{}":
@@ -54,8 +59,8 @@ class Bot:
             return json.loads(res)['response']
 
     def hito_bot(self):
-        urlv = "http://api.hitokoto.us/rand"
-        res = request.urlopen(urlv).read().decode()
+        url = "http://api.hitokoto.us/rand"
+        res = request.urlopen(url).read().decode()
         hit = json.loads(res)
         return hit['hitokoto']
 
@@ -67,16 +72,17 @@ class Qbot(Webqq):
         self.bot = Bot()
 
     def grouphandler(self, data):
-        re = self.bot.reply(data['content'][1])
+        content = data['content'][1]
+        re = self.bot.reply(content)
         self.send_group_msg(data['from_uin'], re)
-        pass
+
     def userhandler(self, data):
-        re = self.bot.reply(data['content'][1])
+        content = data['content'][1]
+        re = self.bot.reply(content)
         self.send_user_msg(data['from_uin'], re)
-        pass
 
 if __name__ == "__main__":
-    from config import getconfig
-    c = getconfig()
+    from config import qqcfg
+    c = qqcfg()
     qq = Qbot(c[0],c[1])
     qq.login()

@@ -90,9 +90,9 @@ class Webqq(QQlogin):
             }
         res = self._request(url=url, data=data)
         if res:
-            tt = threading.Thread(target=self.__pollhandler, args=[res])
-            tt.start()
-        poll = threading.Timer(0, self.__poll)
+            ph = threading.Thread(target=self.__pollhandler, args=[res])
+            ph.start()
+        poll = threading.Thread(target=self.__poll)
         poll.start()
     
     def __pollhandler(self, data):
@@ -101,17 +101,18 @@ class Webqq(QQlogin):
         message 
         kick_message
         """
-        for i in data:
-            pt = i['poll_type']
-            va = i['value']
-            if pt == 'message':
-                self.userhandler(va)
-            elif pt == 'group_message':
-                self.grouphandler(va)
-            elif pt == 'ptwebqq': #TODO update cookie's file value
-                self.cookie.update({'ptwebqq':i['p']})
-            else:
-                pass
+        if data:
+            for i in data:
+                pt = i['poll_type']
+                va = i['value']
+                if pt == 'message':
+                    self.userhandler(va)
+                elif pt == 'group_message':
+                    self.grouphandler(va)
+                elif pt == 'ptwebqq': #TODO update cookie's file value
+                    self.cookie.update({'ptwebqq':i['p']})
+                else:
+                    pass
 
     def grouphandler(self, data):
         self.send_group_msg(data['from_uin'])
@@ -157,7 +158,7 @@ class Webqq(QQlogin):
         return res
 
 if __name__ == "__main__":
-    from config import getconfig
-    c = getconfig()
+    from config import qqcfg
+    c = qqcfg()
     qq = Webqq(c[0],c[1])
     qq.login()

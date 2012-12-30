@@ -12,13 +12,13 @@ import logging
 
 COOKIE="cookie.txt"
 IMG="verify.png"
+
 logger = logging.getLogger()
 formatter = logging.Formatter('%(levelname)s %(message)s')
 hdlr = logging.StreamHandler()
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.DEBUG)
-
 
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
@@ -29,17 +29,16 @@ class VHTTPhandler(SimpleHTTPRequestHandler):
         try:
             f = open(path,"rb")
         except FileNotFoundError:
-            self.send_error(404, "Not file verify")
+            self.send_error(404, "Not file find")
         self.send_response(200)
-        self.send_header("Content-type","image/png")
+        self.send_header("Content-type", "image/png")
         fs = os.fstat(f.fileno())
         self.send_header("Content-Length", str(fs[6]))
-        self.send_header("Last-Modified",self.date_time_string(fs.st_mtime))
+        self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
         self.end_headers()
         self.copyfile(f, self.wfile)
         f.close()
         ViewVerify.stop()
-
 
 class ViewVerify():
 
@@ -78,8 +77,7 @@ class QQlogin:
             return hashlib.md5(s).hexdigest().upper()
 
     def _request(self, url, data=None, cookie=False):
-        logger.debug("URL<--"+url)
-        logger.debug("DATA<--"+str(data))
+        logger.debug(url,data)
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -105,12 +103,12 @@ class QQlogin:
                 elif res['retcode'] == 114: #send msg fail TODO:retry
                     res = None
                 elif res['retcode'] == 116: #update ptwebqq value
-                    res = [res.update({"poll_type":"ptwebqq"})]
+                    res = tuple([res.update({"poll_type":"ptwebqq"})])
                 else:
-                    logger.error("ERROR:"+url)
+                    logger.error(url)
             if cookie:
                 self.cookieJar.save(ignore_discard=True, ignore_expires=True)
-        logger.debug("RES-->"+str(res))
+        logger.debug(res)
         return res
     
     def __init__(self, qq, pw):
@@ -160,7 +158,7 @@ class QQlogin:
             logger.error(res)
 
 if __name__ == "__main__":
-    from config import getconfig
-    c = getconfig()
+    from config import qqcfg
+    c = qqcfg()
     q = QQlogin(c[0],c[1])
     q.test()
