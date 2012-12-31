@@ -8,17 +8,10 @@ import random
 import json,hashlib
 import gzip
 import os
-import logging
+from logger import logger
 
 COOKIE="cookie.txt"
 IMG="verify.png"
-
-logger = logging.getLogger()
-formatter = logging.Formatter('%(levelname)s %(message)s')
-hdlr = logging.StreamHandler()
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
 
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
@@ -77,8 +70,7 @@ class QQlogin:
             return hashlib.md5(s).hexdigest().upper()
 
     def _request(self, url, data=None, cookie=False):
-        logger.debug(data)
-        logger.debug(url)
+        logger.debug("OUT:\n%s<--%s\n" %(url, data))
         if data:
             data = parse.urlencode(data).encode('utf-8')
             rr = request.Request(url, data, self._headers)
@@ -93,6 +85,7 @@ class QQlogin:
                     res = fp.read().decode('utf-8')
                 except:
                     res = fp.read()
+                    logger.debug("IN-raw:\n%s"%res)
             if fp.info().get('Content-Type') == 'text/plain; charset=utf-8':
                 res = json.loads(res)
                 if res['retcode'] == 0: #success
@@ -110,7 +103,7 @@ class QQlogin:
                     res = None
             if cookie:
                 self.cookieJar.save(ignore_discard=True, ignore_expires=True)
-        logger.debug(res)
+        logger.debug("IN:\n%s"%res)
         return res
     
     def __init__(self, qq, pw):

@@ -8,7 +8,7 @@ import json
 from webqq import Webqq
 import re
 import threading
-from pprint import pprint
+from logger import logger
 #import sqlite3
 
 class Bot:
@@ -80,11 +80,13 @@ class Qbot(Webqq):
         content = data['content'][1]
         re = self.bot.reply(content)
         self.send_group_msg(data['from_uin'], re)
+        logger.info("IN:%s\nreply group:%s"%(content, re))
 
     def userhandler(self, data):
         content = data['content'][1]
         re = self.bot.reply(content)
         self.send_user_msg(data['from_uin'], re)
+        logger.info("IN:%s\nreply user:%s"%(content, re))
 
 if __name__ == "__main__":
     from config import qqcfg

@@ -82,7 +82,7 @@ class Webqq(QQlogin):
         url = "http://d.web2.qq.com/channel/poll2"
         self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
         status = {'clientid':self.clientid,
-            'psessionid':self._login_info['psessionid']
+            'psessionid':self._login_info['psessionid'] #TODO BUG there have a bug about it
             }
         data = {'r':json.dumps(status),
             'clientid' : self.clientid,
