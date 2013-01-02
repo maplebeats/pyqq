@@ -6,7 +6,7 @@ from qqlogin import QQlogin, COOKIE
 import threading
 import os
 import json
-from pprint import pprint
+from logger import logger
 
 class Webqq(QQlogin):
 
@@ -36,10 +36,10 @@ class Webqq(QQlogin):
                 self._getverifycode()
                 self.login()
             else:
-                pprint(res)
+                logger.error(res)
                 raise Exception("登陆错误")
         self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
-        self._login_info = self.get_login_info()
+        self._login_info.update(self.get_login_info())
         self.__poll()
         self._user_info = self.get_user_info()
         self._group_info = self.get_group_info()
@@ -55,12 +55,13 @@ class Webqq(QQlogin):
             }
         data = {'r':json.dumps(status),
             'clientid' : self.clientid,
-            'psessionid':	'null'
+            'psessionid':'null'
             }
         res = self._request(url, data)
         if not os.path.isfile(COOKIE):  #cookie timeout
             self.login()
-        return res
+        else:
+            return res
 
     def get_user_info(self):
         url = "http://s.web2.qq.com/api/get_user_friends2"
