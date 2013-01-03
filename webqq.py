@@ -39,12 +39,15 @@ class Webqq(QQlogin):
             else:
                 logger.error(res)
                 raise Exception("登陆错误")
-        self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
-        tmp = self.get_login_info()
-        self._login_info.update(tmp)
-        self.__poll()
-        self._user_info = self.get_user_info()
-        self._group_info = self.get_group_info()
+        if os.path.isfile(COOKIE): #cookie timeout
+            self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
+            tmp = self.get_login_info()
+            self._login_info.update(tmp)
+            self.__poll()
+            self._user_info = self.get_user_info()
+            self._group_info = self.get_group_info()
+        else:
+            self.login()
 
     def get_login_info(self):
         INFO = 'info' #TODO
@@ -94,7 +97,7 @@ class Webqq(QQlogin):
         url = "http://d.web2.qq.com/channel/poll2"
         self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
         status = {'clientid':self.clientid,
-            'psessionid':self._login_info['psessionid'] #TODO BUG there have a bug about it
+            'psessionid':self._login_info['psessionid'] 
             }
         data = {'r':json.dumps(status),
             'clientid' : self.clientid,
