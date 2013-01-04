@@ -71,10 +71,10 @@ class Webqq(QQlogin):
         else:
             with open(INFO, 'rb') as i:
                 tmp = pickle.load(i)
-                if tmp:
+                if tmp > 2: #fix 103 code
                     return tmp
                 else:
-                    raise Exception("INFO is None")
+                    raise Exception("INFO is wrong")
             
 
     def get_user_info(self):
