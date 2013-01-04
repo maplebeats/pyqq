@@ -39,9 +39,9 @@ class Webqq(QQlogin):
             else:
                 logger.error(res)
                 raise Exception("登陆错误")
+        self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
+        tmp = self.get_login_info()
         if os.path.isfile(COOKIE): #cookie timeout
-            self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
-            tmp = self.get_login_info()
             self._login_info.update(tmp)
             self.__poll()
             self._user_info = self.get_user_info()
