@@ -31,9 +31,6 @@ class Bot:
 
     @staticmethod
     def gettitle(url):
-        """
-        need rewrite
-        """
         tre = re.compile(b'<title[^>]*>([^<]*)<')
         content = b''
         title = b''
@@ -52,23 +49,21 @@ class Bot:
             charset = 'gbk'
         elif content.upper().find(b'BIG5') != -1:
             charset = 'big5'
+        else:
+            charset= 'utf-8'
         try:
             title = title.decode(charset).replace('\n', '')
             title = title.strip()
-        except UnboundLocalError:
+        except UnboundLocalError: #G.F.W
             title = None
         return title 
 
     def reply(self, req):
-        link = re.compile(r'(?:http[s]?://)?.*\.\w{2,5}[\w/]*', re.I)
-        l = link.findall(req)
+        link = re.compile(r'(?:http[s]?://)?(.*\.\w{2,5}[\w/]*)', re.I)
+        l = link.search(req)
         if l:
-            u = []
-            for i in l:
-                if i.find('http') == -1:
-                    i = 'http://' + i
-                u.append(Bot.gettitle(i))
-            return u[0].strip()
+            url = 'http://' + l.group(1)
+            return Bot.gettitle(url) or self.hito_bot()
         else:
             return self.simi_bot(req) or self.hito_bot()
 
