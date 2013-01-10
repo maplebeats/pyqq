@@ -31,6 +31,9 @@ class Bot:
 
     @staticmethod
     def gettitle(url):
+        """
+        Can't process gzip compress
+        """
         tre = re.compile(b'<title[^>]*>([^<]*)<')
         content = b''
         title = b''
@@ -40,13 +43,13 @@ class Bot:
                 if len(content) < 64:
                     break
                 m = tre.search(content, re.IGNORECASE)
-                n = re.search(b'charset=.*?/>', content, re.IGNORECASE)  #有些SB网站把charset写在后面
+                n = re.search(b'charset=.+?>', content, re.IGNORECASE)  #有些SB网站把charset写在后面
                 if m and n:
                     title = m.group(1)
                     break
         if content.upper().find(b'UTF-8') != -1:
             charset = 'utf-8'
-        elif content.upper().find(b'GB2312') != -1:
+        elif content.upper().find(b'GB2312') != -1 or content.upper().find(b'GBK'):
             charset = 'gbk'
         elif content.upper().find(b'BIG5') != -1:
             charset = 'big5'
@@ -56,7 +59,7 @@ class Bot:
             title = title.decode(charset).replace('\n', '')
             title = title.strip()
         except UnboundLocalError: #G.F.W
-            title = None
+            title = 'G.F.W我恨你' 
         return title 
 
     def reply(self, req):
@@ -64,7 +67,7 @@ class Bot:
         l = link.search(req)
         if l:
             url = 'http://' + l.group(1)
-            return Bot.gettitle(url) or self.hito_bot()
+            return Bot.gettitle(url)
         else:
             return self.simi_bot(req) or self.hito_bot()
 
@@ -81,9 +84,6 @@ class Bot:
         self._request(url=url, opener=self.simi_opener)
 
     def simi_bot(self, req):
-        """
-        req could not have % ...
-        """
         url = "http://www.simsimi.com/func/req?%s" % parse.urlencode({"msg": req, "lc": "zh"})
         res = self._request(url, opener=self.simi_opener)
         if res == "{}":
@@ -141,4 +141,4 @@ if __name__ == "__main__":
     c = qqcfg()
     qq = Qbot(c[0],c[1])
     qq.login()
-    #print(Bot.gettitle('http://www.qq.com'))
+#   print(Bot.gettitle('http://www.baidu.com'))
