@@ -105,7 +105,7 @@ class Qbot(Webqq):
     def grouphandler(self, data):
         content_list = data['content']
         content = ''
-        for i in content:
+        for i in content_list:
             if type(i) == list:
                 continue
             else:
@@ -121,7 +121,7 @@ class Qbot(Webqq):
     def userhandler(self, data):
         content_list = data['content']
         content = ''
-        for i in content:
+        for i in content_list:
             if type(i) == list:
                 continue
             else:
