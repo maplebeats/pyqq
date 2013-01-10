@@ -34,24 +34,30 @@ class Bot:
         """
         need rewrite
         """
-        title = re.compile(b'<title>(.*)</title>')
-        r = request.urlopen(url).read(1024)
-        if r.find(b'utf-8') != -1:
-            de = 'utf-8'
-        else:
-            de = 'gbk'
-        t = title.findall(r)
-        if t:
-            t = t[0]
-            try:
-                return t.decode(de)
-            except:
-                if de == 'gbk':
-                    return t.decode('utf-8')
-                else:
-                    return t.decode('gbk')
-        else:
-            return "this page didn't have title"
+        tre = re.compile(b'<title[^>]*>([^<]*)<')
+        content = b''
+        title = b''
+        with request.urlopen(url) as r:
+            for i in range(300):
+                content += r.read(64)
+                if len(content) < 64:
+                    break
+                m = tre.search(content, re.IGNORECASE)
+                if m:
+                    title = m.group(1)
+                    break
+        if content.upper().find(b'UTF-8') != -1:
+            charset = 'utf-8'
+        elif content.upper().find(b'GB2312') != -1:
+            charset = 'gbk'
+        elif content.upper().find(b'BIG5') != -1:
+            charset = 'big5'
+        try:
+            title = title.decode(charset).replace('\n', '')
+            title = title.strip()
+        except UnboundLocalError:
+            title = None
+        return title 
 
     def reply(self, req):
         link = re.compile(r'(?:http[s]?://)?.*\.\w{2,5}[\w/]*', re.I)
