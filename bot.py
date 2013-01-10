@@ -40,7 +40,8 @@ class Bot:
                 if len(content) < 64:
                     break
                 m = tre.search(content, re.IGNORECASE)
-                if m:
+                n = re.search(b'charset=.*?/>', content, re.IGNORECASE)  #有些SB网站把charset写在后面
+                if m and n:
                     title = m.group(1)
                     break
         if content.upper().find(b'UTF-8') != -1:
