@@ -64,8 +64,7 @@ class Bot:
                 u.append(Bot.gettitle(i))
             return u[0].strip()
         else:
-            return False
-            #return self.simi_bot(req) or self.hito_bot()
+            return self.simi_bot(req) or self.hito_bot()
 
     def simi_init(self):
         simi_Jar = cookiejar.CookieJar()
@@ -104,14 +103,32 @@ class Qbot(Webqq):
         self.bot = Bot()
 
     def grouphandler(self, data):
-        content = data['content'][1]
+        content_list = data['content']
+        content = ''
+        for i in content:
+            if type(i) == list:
+                continue
+            else:
+                content += i
+        content = content.strip()
+        if len(content) == 0:
+            content == '表情'
         re = self.bot.reply(content)
         if re:
             self.send_group_msg(data['from_uin'], re)
         logger.info("IN:%s\nreply group:%s"%(content, re))
 
     def userhandler(self, data):
-        content = data['content'][1]
+        content_list = data['content']
+        content = ''
+        for i in content:
+            if type(i) == list:
+                continue
+            else:
+                content += i
+        content = content.strip()
+        if len(content) == 0:
+            content == '表情'
         re = self.bot.reply(content)
         if re:
             self.send_user_msg(data['from_uin'], re)
