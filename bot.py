@@ -116,6 +116,10 @@ class Qbot(Webqq):
             content_list = data['content']
             suin = data['send_uin']
             fuin = data['from_uin']
+            try:
+                sname = self.ginfo[suin] 
+            except KeyError: #TODO 加入新人时会产生KeyError
+                self.name_info #重新请求
             content = ''
             for i in content_list:
                 if type(i) == list:
@@ -127,20 +131,18 @@ class Qbot(Webqq):
                 content == '表情'
             if gcfg[2]:
                 l = self.link.search(content)
-            else:
-                l = False
-            if l:
                 re = self.bot.reply(url=l.group(1))
+                re = "@%s Title:%s" % (sname, re)
             else:
                 if gcfg[1]:
                     re = self.bot.reply(content)
                 else:
                     re = None
-            logger.info("[G][%s][%s]:%s\n[R]:%s"%(self.group[fuin], self.ginfo[suin], content, re))
+            logger.info("[G]<%s>[%s]:%s\n[R]:%s"%(self.group[fuin], sname, content, re)) 
             if re:
                 re = self.send_group_msg(fuin, re)
                 if re != 'ok':
-                    logger.error('[G][E]回复[%]发送失败' % self.ginfo[suin])
+                    logger.error('[G][E]回复[%s]发送失败' % sname)
         else:
             pass
 
@@ -159,9 +161,6 @@ class Qbot(Webqq):
                 content == '表情'
             if fcfg[2]:
                 l = self.link.search(content)
-            else:
-                l = False
-            if l:
                 re = self.bot.reply(url=l.group(1))
             else:
                 if fcfg[1]:
@@ -172,7 +171,7 @@ class Qbot(Webqq):
             if re:
                 re = self.send_user_msg(uin, re)
                 if re != 'ok':
-                    logger.error('[G][E]回复[%]发送失败' % self.ginfo[suin])
+                    logger.error('[F][E]回复[%s]发送失败' % self.finfo[suin])
         else:
             pass
 

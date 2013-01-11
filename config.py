@@ -18,3 +18,6 @@ def botcfg():
     fauto = config.getboolean('fbot', 'auto')
     furl = config.getboolean('fbot', 'url')
     return ((genable, gauto, gurl),(fenable, fauto, furl))
+
+def decfg():
+    return config.getboolean('debug', 'enable')

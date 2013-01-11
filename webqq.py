@@ -58,14 +58,14 @@ class Webqq(QQlogin):
         for i in g[1]:
             self.ginfo.update(dict(((x['uin'],x['nick']) for x in i['minfo'])))
             try:
-                self.ginfo.update(dict([(x['uin'],x['markname']) for x in i['marknames']]))
+                self.ginfo.update(dict([(x['muin'],x['card']) for x in i['cards']]))
             except KeyError:
-                logger.warn('this group have no markname')
+                logger.warn('This group have no card')
         self.finfo = dict(((x['uin'],x['nick']) for x in u['info']))
         try:
-            self.finfo.update(dict([(x['uin'],x['card']) for x in u['cards']]))
+            self.finfo.update(dict([(x['uin'],x['markname']) for x in u['marknames']]))
         except KeyError:
-            logger.warn('have no markname')
+            logger.warn('You do not have no markname')
 
     def get_login_info(self):
         INFO = 'info' #TODO
@@ -126,7 +126,7 @@ class Webqq(QQlogin):
             }
         data = {'r':json.dumps(status),
             'clientid' : self.clientid,
-            'psessionid':	'null'
+            'psessionid':'null'
             }
         res = self._request(url=url, data=data)
         if res:
