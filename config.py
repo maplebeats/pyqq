@@ -11,8 +11,10 @@ def qqcfg():
     return (qq, pw)
 
 def botcfg():
-    enable = config.get('bot', 'enable')
-    store = config.get('bot', 'store')
-    auto = config.get('bot', 'auto')
-    url = config.get('bot', 'url')
-    return (enable, store, auto, url)
+    genable = config.getboolean('gbot', 'enable')
+    gauto = config.getboolean('gbot', 'auto')
+    gurl = config.getboolean('gbot', 'url')
+    fenable = config.getboolean('fbot', 'enable')
+    fauto = config.getboolean('fbot', 'auto')
+    furl = config.getboolean('fbot', 'url')
+    return ((genable, gauto, gurl),(fenable, fauto, furl))

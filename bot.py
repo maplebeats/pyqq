@@ -11,6 +11,9 @@ import threading
 from logger import logger
 from config import botcfg
 #import sqlite3
+cfg = botcfg()
+gcfg = cfg[0]
+fcfg = cfg[1]
 
 class Bot:
 
@@ -67,22 +70,12 @@ class Bot:
             title = 'G.F.W我恨你' 
         return title 
 
-    def reply(self, req):
-        if self.cfg[0] == '0':
-            return None
-        link = re.compile(r'(?:http[s]?://)?(.*\.\w{2,5}[\w/]*)', re.I)
-        l = link.search(req)
-        if l:
-            url = 'http://' + l.group(1)
-            if self.cfg[1] == '0':
-                return None
-            else:
-                return Bot.gettitle(url)
+    def reply(self, req=None, url=None):
+        if url:
+            url = 'http://' + url
+            return Bot.gettitle(url)
         else:
-            if self.cfg[2] == '0':
-                return None
-            else:
-                return self.simi_bot(req) or self.hito_bot()
+            return self.simi_bot(req) or self.hito_bot()
 
     def simi_init(self):
         simi_Jar = cookiejar.CookieJar()
@@ -116,41 +109,72 @@ class Qbot(Webqq):
     def __init__(self, qq, ps):
         super(Qbot, self).__init__(qq, ps)
         self.bot = Bot()
+        self.link = re.compile(r'(?:http[s]?://)?(.*\.\w{2,5}[\w/]*)', re.I)
 
     def grouphandler(self, data):
-        content_list = data['content']
-        suin = data['send_uin']
-        fuin = data['from_uin']
-        content = ''
-        for i in content_list:
-            if type(i) == list:
-                continue
+        if gcfg[0]:
+            content_list = data['content']
+            suin = data['send_uin']
+            fuin = data['from_uin']
+            content = ''
+            for i in content_list:
+                if type(i) == list:
+                    continue
+                else:
+                    content += i
+            content = content.strip()
+            if len(content) == 0:
+                content == '表情'
+            if gcfg[2]:
+                l = self.link.search(content)
             else:
-                content += i
-        content = content.strip()
-        if len(content) == 0:
-            content == '表情'
-        re = self.bot.reply(content)
-        if re:
-            self.send_group_msg(fuin, re)
-        logger.info("[G][%s][%s]:%s\n[R]:%s"%(self.group[fuin], self.ginfo[suin], content, re))
+                l = False
+            if l:
+                re = self.bot.reply(url=l.group(1))
+            else:
+                if gcfg[1]:
+                    re = self.bot.reply(content)
+                else:
+                    re = None
+            logger.info("[G][%s][%s]:%s\n[R]:%s"%(self.group[fuin], self.ginfo[suin], content, re))
+            if re:
+                re = self.send_group_msg(fuin, re)
+                if re != 'ok':
+                    logger.error('[G][E]回复[%]发送失败' % self.ginfo[suin])
+        else:
+            pass
 
     def userhandler(self, data):
-        content_list = data['content']
-        uin = data['from_uin']
-        content = ''
-        for i in content_list:
-            if type(i) == list:
-                continue
+        if fcfg[0]:
+            content_list = data['content']
+            uin = data['from_uin']
+            content = ''
+            for i in content_list:
+                if type(i) == list:
+                    continue
+                else:
+                    content += i
+            content = content.strip()
+            if len(content) == 0:
+                content == '表情'
+            if fcfg[2]:
+                l = self.link.search(content)
             else:
-                content += i
-        content = content.strip()
-        if len(content) == 0:
-            content == '表情'
-        re = self.bot.reply(content)
-        if re:
-            self.send_user_msg(uin, re)
-        logger.info("[F]%s:%s\n[R]:%s"%(self.finfo[uin], content, re))
+                l = False
+            if l:
+                re = self.bot.reply(url=l.group(1))
+            else:
+                if fcfg[1]:
+                    re = self.bot.reply(content)
+                else:
+                    re = None
+            logger.info("[F]%s:%s\n[R]:%s"%(self.finfo[uin], content, re))
+            if re:
+                re = self.send_user_msg(uin, re)
+                if re != 'ok':
+                    logger.error('[G][E]回复[%]发送失败' % self.ginfo[suin])
+        else:
+            pass
 
 if __name__ == "__main__":
     from config import qqcfg
