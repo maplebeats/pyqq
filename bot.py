@@ -129,8 +129,8 @@ class Qbot(Webqq):
             content = content.strip()
             if len(content) == 0:
                 content == '表情'
-            if gcfg[2]:
-                l = self.link.search(content)
+            l = self.link.search(content)
+            if gcfg[2] and l:
                 re = self.bot.reply(url=l.group(1))
                 re = "@%s Title:%s" % (sname, re)
             else:
@@ -159,8 +159,8 @@ class Qbot(Webqq):
             content = content.strip()
             if len(content) == 0:
                 content == '表情'
-            if fcfg[2]:
-                l = self.link.search(content)
+            l = self.link.search(content)
+            if fcfg[2] and l:
                 re = self.bot.reply(url=l.group(1))
             else:
                 if fcfg[1]:
