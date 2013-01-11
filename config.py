@@ -13,4 +13,6 @@ def qqcfg():
 def botcfg():
     enable = config.get('bot', 'enable')
     store = config.get('bot', 'store')
-    return (enable, store)
+    auto = config.get('bot', 'auto')
+    url = config.get('bot', 'url')
+    return (enable, store, auto, url)

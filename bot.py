@@ -9,6 +9,7 @@ from webqq import Webqq
 import re
 import threading
 from logger import logger
+from config import botcfg
 #import sqlite3
 
 class Bot:
@@ -28,6 +29,7 @@ class Bot:
 
     def __init__(self):
         self.simi_init()
+        self.cfg = botcfg()
 
     @staticmethod
     def gettitle(url):
@@ -48,7 +50,7 @@ class Bot:
                     if m and n:
                         title = m.group(1)
                         break
-        except URLError:
+        except:
             logger.warn('url time out')
         if content.upper().find(b'UTF-8') != -1:
             charset = 'utf-8'
@@ -66,13 +68,21 @@ class Bot:
         return title 
 
     def reply(self, req):
+        if self.cfg[0] == '0':
+            return None
         link = re.compile(r'(?:http[s]?://)?(.*\.\w{2,5}[\w/]*)', re.I)
         l = link.search(req)
         if l:
             url = 'http://' + l.group(1)
-            return Bot.gettitle(url)
+            if self.cfg[1] == '0':
+                return None
+            else:
+                return Bot.gettitle(url)
         else:
-            return self.simi_bot(req) or self.hito_bot()
+            if self.cfg[2] == '0':
+                return None
+            else:
+                return self.simi_bot(req) or self.hito_bot()
 
     def simi_init(self):
         simi_Jar = cookiejar.CookieJar()
