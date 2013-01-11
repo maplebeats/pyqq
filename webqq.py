@@ -54,12 +54,14 @@ class Webqq(QQlogin):
         g = self.get_group_info()
         u = self.get_user_info()
         self.group = g[0]
-        self.ginfo = dict(((x['uin'],x['nick']) for x in g[1]['minfo']))
+        self.ginfo = {}
+        for i in g[1]:
+            self.ginfo.update(dict(((x['uin'],x['nick']) for x in i['minfo'])))
+            try:
+                self.ginfo.update(dict([(x['uin'],x['markname']) for x in i['marknames']]))
+            except KeyError:
+                logger.warn('this group have no markname')
         self.finfo = dict(((x['uin'],x['nick']) for x in u['info']))
-        try:
-            self.ginfo.update(dict([(x['uin'],x['markname']) for x in g[1]['marknames']]))
-        except KeyError:
-            logger.warn('have no markname')
         try:
             self.finfo.update(dict([(x['uin'],x['card']) for x in u['cards']]))
         except KeyError:
@@ -108,12 +110,12 @@ class Webqq(QQlogin):
         data = {'r':json.dumps(status)}
         res = self._request(url, data)
         ginfo = {}
-        info = {}
+        info = []
         for i in res['gnamelist']:
             ginfo.update({i['gid']:i['name']})
             url = "http://s.web2.qq.com/api/get_group_info_ext2?gcode=%s&vfwebqq=%s&t=%s" % (i['code'],self._login_info['vfwebqq'],random.randrange(1345457600000,1345458000000))
             res = self._request(url)
-            info.update(res)
+            info.append(res)
         return ginfo, info
 
     def __poll(self):
