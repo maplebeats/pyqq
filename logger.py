@@ -5,9 +5,10 @@
 import logging
 
 logger = logging.getLogger()
-FORMAT = '%(levelname)s %(module)s %(message)s'
+#FORMAT = '%(levelname)s %(module)s %(message)s'
+FORMAT = '%(message)s'
 formatter = logging.Formatter(FORMAT)
 hdlr = logging.StreamHandler()
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)

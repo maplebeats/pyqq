@@ -8,6 +8,7 @@ import os
 import json
 from logger import logger
 import pickle
+import random
 
 class Webqq(QQlogin):
 
@@ -17,10 +18,9 @@ class Webqq(QQlogin):
         self.clientid = "4646111"
         self.cookies = {} 
         self._login_info = {}
-        self._user_info = []
-        self._group_info = []
     
     def login(self):
+        logger.info('login...')
         if os.path.isfile(COOKIE): 
             self.cookieJar.load(ignore_discard=True, ignore_expires=True)
         else:
@@ -41,13 +41,29 @@ class Webqq(QQlogin):
                 raise Exception("登陆错误")
         self.cookies.update(dict([(x.name,x.value) for x in self.cookieJar]))
         tmp = self.get_login_info()
-        if os.path.isfile(COOKIE): #cookie timeout
+        logger.debug(tmp)
+        if os.path.isfile(COOKIE) and tmp: #cookie timeout
             self._login_info.update(tmp)
+            self.name_info()
             self.__poll()
-            self._user_info = self.get_user_info()
-            self._group_info = self.get_group_info()
         else:
             self.login()
+
+    def name_info(self):
+        logger.info('Fetching info')
+        g = self.get_group_info()
+        u = self.get_user_info()
+        self.group = g[0]
+        self.ginfo = dict(((x['uin'],x['nick']) for x in g[1]['minfo']))
+        self.finfo = dict(((x['uin'],x['nick']) for x in u['info']))
+        try:
+            self.ginfo.update(dict([(x['uin'],x['markname']) for x in g[1]['marknames']]))
+        except KeyError:
+            logger.warn('have no markname')
+        try:
+            self.finfo.update(dict([(x['uin'],x['card']) for x in u['cards']]))
+        except KeyError:
+            logger.warn('have no markname')
 
     def get_login_info(self):
         INFO = 'info' #TODO
@@ -91,7 +107,14 @@ class Webqq(QQlogin):
         status = {"vfwebqq":self._login_info['vfwebqq']}
         data = {'r':json.dumps(status)}
         res = self._request(url, data)
-        return res
+        ginfo = {}
+        info = {}
+        for i in res['gnamelist']:
+            ginfo.update({i['gid']:i['name']})
+            url = "http://s.web2.qq.com/api/get_group_info_ext2?gcode=%s&vfwebqq=%s&t=%s" % (i['code'],self._login_info['vfwebqq'],random.randrange(1345457600000,1345458000000))
+            res = self._request(url)
+            info.update(res)
+        return ginfo, info
 
     def __poll(self):
         url = "http://d.web2.qq.com/channel/poll2"

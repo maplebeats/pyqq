@@ -86,7 +86,8 @@ class QQlogin:
                 except:
                     res = fp.read()
                     logger.debug("IN-raw:\n%s"%res)
-            if fp.info().get('Content-Type') == 'text/plain; charset=utf-8':
+            t = fp.info().get('Content-Type')
+            if t == 'text/plain; charset=utf-8' or t == 'application/json;charset=utf-8':
                 res = json.loads(res)
                 if res['retcode'] == 0: #success
                     res = res['result']

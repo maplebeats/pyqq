@@ -37,16 +37,19 @@ class Bot:
         tre = re.compile(b'<title[^>]*>([^<]*)<')
         content = b''
         title = b''
-        with request.urlopen(url) as r:
-            for i in range(300):
-                content += r.read(64)
-                if len(content) < 64:
-                    break
-                m = tre.search(content, re.IGNORECASE)
-                n = re.search(b'charset=.+?>', content, re.IGNORECASE)  #有些SB网站把charset写在后面
-                if m and n:
-                    title = m.group(1)
-                    break
+        try:
+            with request.urlopen(url) as r:
+                for i in range(300):
+                    content += r.read(64)
+                    if len(content) < 64:
+                        break
+                    m = tre.search(content, re.IGNORECASE)
+                    n = re.search(b'charset=.+?>', content, re.IGNORECASE)  #有些SB网站把charset写在后面
+                    if m and n:
+                        title = m.group(1)
+                        break
+        except URLError:
+            logger.warn('url time out')
         if content.upper().find(b'UTF-8') != -1:
             charset = 'utf-8'
         elif content.upper().find(b'GB2312') != -1 or content.upper().find(b'GBK'):
@@ -106,6 +109,8 @@ class Qbot(Webqq):
 
     def grouphandler(self, data):
         content_list = data['content']
+        suin = data['send_uin']
+        fuin = data['from_uin']
         content = ''
         for i in content_list:
             if type(i) == list:
@@ -117,11 +122,12 @@ class Qbot(Webqq):
             content == '表情'
         re = self.bot.reply(content)
         if re:
-            self.send_group_msg(data['from_uin'], re)
-        logger.info("IN:%s\nreply group:%s"%(content, re))
+            self.send_group_msg(fuin, re)
+        logger.info("[G][%s][%s]:%s\n[R]:%s"%(self.group[fuin], self.ginfo[suin], content, re))
 
     def userhandler(self, data):
         content_list = data['content']
+        uin = data['from_uin']
         content = ''
         for i in content_list:
             if type(i) == list:
@@ -133,8 +139,8 @@ class Qbot(Webqq):
             content == '表情'
         re = self.bot.reply(content)
         if re:
-            self.send_user_msg(data['from_uin'], re)
-        logger.info("IN:%s\nreply user:%s"%(content, re))
+            self.send_user_msg(uin, re)
+        logger.info("[F]%s:%s\n[R]:%s"%(self.finfo[uin], content, re))
 
 if __name__ == "__main__":
     from config import qqcfg
