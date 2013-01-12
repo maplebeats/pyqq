@@ -109,7 +109,7 @@ class Qbot(Webqq):
     def __init__(self, qq, ps):
         super(Qbot, self).__init__(qq, ps)
         self.bot = Bot()
-        self.link = re.compile(r'(?:http[s]?://)?(.*\.\w{2,5}[\w/]*)', re.I)
+        self.link = re.compile(r'(?:http[s]?://)?([a-z]{1,8}\.?.*\.[a-z]{2,5}[a-z/]*)', re.I)
 
     def grouphandler(self, data):
         if gcfg[0]:

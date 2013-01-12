@@ -8,12 +8,13 @@ from config import decfg
 cfg = decfg()
 
 logger = logging.getLogger()
-logging.basicConfig(filename='qq.log')
 
 if cfg:
+    logging.basicConfig(filename='debug.log')
     FORMAT = '%(levelname)s %(module)s %(message)s'
     logger.setLevel(logging.DEBUG)
 else:
+    logging.basicConfig(filename='qq.log')
     FORMAT = '%(message)s'
     logger.setLevel(logging.INFO)
 hdlr = logging.StreamHandler()
