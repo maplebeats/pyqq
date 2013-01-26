@@ -10,10 +10,65 @@ import re
 import threading
 from logger import logger
 from config import botcfg
-#import sqlite3
+import sqlite3
+
+import sys, os
+import subprocess
+import platform
+import time
+
 cfg = botcfg()
 gcfg = cfg[0]
 fcfg = cfg[1]
+
+class Computer:
+    '''
+    just for my computer
+    run commands or timing to complete tasks
+    Windows XP and Arch64(sudo had no password)
+    TODO: XP support
+    '''
+
+    def __init__(self):
+        self.platform = platform.system()
+
+    def commands(self, *coms):
+        for com in coms:
+            r = subprocess.call(com)
+            if not r:
+                com = ' '.join(com)
+                logger.info('run %s success' % com)
+            else:
+                logger.error('run %s failed(%d)' % com, r)
+
+    def shutdown(self):
+        if self.platform == 'Linux':
+            self.command('poweroff')
+        else:
+            logger.error('Sorry, This platform did not support!')
+
+    def reboot(self):
+        if self.platform == 'Linux':
+            self.command('reboot')
+        else:
+            logger.error('Sorry, This platform did not support!')
+
+    def settimeout(self, time, *coms):
+        r = threading.Timer(time, self.command, args=(coms))
+        r.start()
+
+    def setinterval(self, com):
+        '''
+        how to stop this? TvT interrupterror?
+        '''
+        r = threading.Timer(time, self.command, args=(coms))
+        r.start()
+        i = threading.Timer(time, self.setinterval)
+        i.start()
+
+    def notify(self, words):
+        self.commands(['notify-send', 'PYQQ' , words])
+
 
 class Bot:
 
@@ -110,6 +165,8 @@ class Qbot(Webqq):
         super(Qbot, self).__init__(qq, ps)
         self.bot = Bot()
         self.link = re.compile(r'(?:http[s]?://)?([a-z]{1,8}\.?.*\.[a-z]{2,5}[a-z/]*)', re.I)
+        self.commands = ('关机', '重启', '消息', '命令', '延时', '间隔')
+        self.computer = Computer()
 
     def grouphandler(self, data):
         if gcfg[0]:
@@ -162,6 +219,9 @@ class Qbot(Webqq):
             l = self.link.search(content)
             if fcfg[2] and l:
                 re = self.bot.reply(url=l.group(1))
+            elif content in self.commands:
+                self.computer.notify('ERROR:This featrue do not complete') #TODO
+                re = 'Run commads'
             else:
                 if fcfg[1]:
                     re = self.bot.reply(content)
