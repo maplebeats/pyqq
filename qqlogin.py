@@ -99,6 +99,8 @@ class QQlogin:
                     res = None
                 elif res['retcode'] == 116: #update ptwebqq value
                     res = tuple([res.update({"poll_type":"ptwebqq"})])
+                elif res['retcode'] == 100002: #login with cookie
+                    res = None
                 else:
                     logger.error(url)
                     res = None

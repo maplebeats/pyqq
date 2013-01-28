@@ -197,6 +197,20 @@ class Webqq(QQlogin):
         res = self._request(url, data)
         return res
 
+    def loginout(self):
+        url =  'http://d.web2.qq.com/channel/logout2?ids&clientid=%s&psessionid=%s&t=%s' % (self.clientid, self._login_info['psessionid'], random.randrange(1345457600000,1345458000000))
+        res = self._request(url)
+        if res == 'ok':
+            logger.info('logout success!')
+            return True
+        else:
+            logger.error('logout failed!')
+            return False
+
+    def __del__(self):
+
+        return self.loginout()
+
 if __name__ == "__main__":
     from config import qqcfg
     c = qqcfg()

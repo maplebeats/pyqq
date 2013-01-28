@@ -31,31 +31,44 @@ class Computer:
 
     def __init__(self):
         self.platform = platform.system()
+        self.mods = {'shutdown':['关机', 'poweroff'], 'reboot':['重启', 'reboot'], 'timeout':['延时', 'delay', '后'], 'notify':['提醒', 'notify']}
+
+    def run(self, con):
+        '''
+        check then commands and run it
+        '''
+        return self.notify(con)
 
     def commands(self, *coms):
+        re = []
         for com in coms:
             r = subprocess.call(com)
+            re.append(r)
+            com = ' '.join(com)
             if not r:
-                com = ' '.join(com)
                 logger.info('run %s success' % com)
             else:
-                logger.error('run %s failed(%d)' % com, r)
+                logger.error('run %s failed(%d)' % (com, r))
+        return re
 
     def shutdown(self):
         if self.platform == 'Linux':
-            self.command('poweroff')
+            self.commands(['poweroff'])
         else:
             logger.error('Sorry, This platform did not support!')
+        return True
 
     def reboot(self):
         if self.platform == 'Linux':
-            self.command('reboot')
+            self.commands(['reboot'])
         else:
             logger.error('Sorry, This platform did not support!')
+        return True
 
     def settimeout(self, time, *coms):
         r = threading.Timer(time, self.command, args=(coms))
         r.start()
+        return True
 
     def setinterval(self, com):
         '''
@@ -65,9 +78,13 @@ class Computer:
         r.start()
         i = threading.Timer(time, self.setinterval)
         i.start()
+        return True
 
     def notify(self, words):
-        self.commands(['notify-send', 'PYQQ' , words])
+        '''
+        linux only and you should have installed libnotify packge.
+        '''
+        return self.commands(['notify-send', '-t', '2', 'QQ' , words])
 
 
 class Bot:
@@ -164,9 +181,10 @@ class Qbot(Webqq):
     def __init__(self, qq, ps):
         super(Qbot, self).__init__(qq, ps)
         self.bot = Bot()
+        self.computer = Computer()
         self.link = re.compile(r'(?:http[s]?://)?([a-z]{1,8}\.?.*\.[a-z]{2,5}[a-z/]*)', re.I)
         self.commands = ('关机', '重启', '消息', '命令', '延时', '间隔')
-        self.computer = Computer()
+        self.commod = {} #command mode  TODO 多人控制模式！用字典来储存每人的mode
 
     def grouphandler(self, data):
         if gcfg[0]:
@@ -176,7 +194,8 @@ class Qbot(Webqq):
             try:
                 sname = self.ginfo[suin] 
             except KeyError: #TODO 加入新人时会产生KeyError
-                self.name_info #重新请求
+                self.name_info() #重新请求
+                sname = self.ginfo[suin] 
             content = ''
             for i in content_list:
                 if type(i) == list:
@@ -207,6 +226,11 @@ class Qbot(Webqq):
         if fcfg[0]:
             content_list = data['content']
             uin = data['from_uin']
+            try:
+                fname = self.finfo[uin]
+            except KeyError:
+                logger.warn('[%d] has no card' % uin)
+                fname = 'S.B.'
             content = ''
             for i in content_list:
                 if type(i) == list:
@@ -215,29 +239,44 @@ class Qbot(Webqq):
                     content += i
             content = content.strip()
             if len(content) == 0:
-                content == '表情'
+                content == 'FACE'
             l = self.link.search(content)
             if fcfg[2] and l:
                 re = self.bot.reply(url=l.group(1))
-            elif content in self.commands:
-                self.computer.notify('ERROR:This featrue do not complete') #TODO
-                re = 'Run commads'
+            elif content == 'control' and not self.commod.get(uin):
+                self.commod.update({uin:True})
+                re = 'Run commands mode begin'
+            elif self.commod.get(uin) and content.upper() != 'QUIT':
+                r = self.computer.run(content)
+                re = ''
+                for i in r:
+                    if i == 0:
+                        re += 'commands operation success!'
+                    else:
+                        re += 'commands operation failed(%d)' % i
+
+            elif content.upper() == 'QUIT' and self.commod.get(uin):
+                self.commod.update({uin:False})
+                re = 'Quit command mode!'
             else:
                 if fcfg[1]:
                     re = self.bot.reply(content)
                 else:
                     re = None
-            logger.info("[F]%s:%s\n[R]:%s"%(self.finfo[uin], content, re))
+            logger.info("[F]%s:%s\n[R]:%s"%(fname, content, re))
             if re:
                 re = self.send_user_msg(uin, re)
                 if re != 'ok':
-                    logger.error('[F][E]回复[%s]发送失败' % self.finfo[suin])
+                    logger.error('[F][E]回复[%s]发送失败' % fname)
         else:
             pass
 
 if __name__ == "__main__":
     from config import qqcfg
     c = qqcfg()
-    qq = Qbot(c[0],c[1])
-    qq.login()
+    try:
+        qq = Qbot(c[0],c[1])
+        qq.login()
+    except KeyboardInterrupt:
+        qq.loginout()
 #   print(Bot.gettitle('http://www.baidu.com'))
