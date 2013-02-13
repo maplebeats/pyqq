@@ -278,5 +278,5 @@ if __name__ == "__main__":
         qq = Qbot(c[0],c[1])
         qq.login()
     except KeyboardInterrupt:
-        qq.loginout()
+        qq.logout()
 #   print(Bot.gettitle('http://www.baidu.com'))

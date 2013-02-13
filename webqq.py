@@ -3,7 +3,6 @@
 # gtalk/mail: maplebeats@gmail.com
 
 from qqlogin import QQlogin, COOKIE
-import threading
 import os
 import json
 from logger import logger
@@ -119,21 +118,22 @@ class Webqq(QQlogin):
         return ginfo, info
 
     def __poll(self):
-        url = "http://d.web2.qq.com/channel/poll2"
-        self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
-        status = {'clientid':self.clientid,
-            'psessionid':self._login_info['psessionid'] 
-            }
-        data = {'r':json.dumps(status),
-            'clientid' : self.clientid,
-            'psessionid':'null'
-            }
-        res = self._request(url=url, data=data)
-        if res:
-            ph = threading.Thread(target=self.__pollhandler, args=(res,))
-            ph.start()
-        poll = threading.Thread(target=self.__poll)
-        poll.start()
+        while True:
+            url = "http://d.web2.qq.com/channel/poll2"
+            self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
+            status = {'clientid':self.clientid,
+                'psessionid':self._login_info['psessionid'] 
+                }
+            data = {'r':json.dumps(status),
+                'clientid' : self.clientid,
+                'psessionid':'null'
+                }
+            res = self._request(url=url, data=data)
+            if res:
+                try:
+                    self.__pollhandler(res)
+                except: #TODO
+                    pass
     
     def __pollhandler(self, data):
         for i in data:
@@ -197,7 +197,7 @@ class Webqq(QQlogin):
         res = self._request(url, data)
         return res
 
-    def loginout(self):
+    def logout(self):
         url =  'http://d.web2.qq.com/channel/logout2?ids&clientid=%s&psessionid=%s&t=%s' % (self.clientid, self._login_info['psessionid'], random.randrange(1345457600000,1345458000000))
         res = self._request(url)
         if res == 'ok':
@@ -208,8 +208,7 @@ class Webqq(QQlogin):
             return False
 
     def __del__(self):
-
-        return self.loginout()
+        self.logout()
 
 if __name__ == "__main__":
     from config import qqcfg
