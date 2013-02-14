@@ -8,6 +8,7 @@ import json
 from logger import logger
 import pickle
 import random
+import threading
 
 class Webqq(QQlogin):
 
@@ -141,9 +142,11 @@ class Webqq(QQlogin):
                 pt = i['poll_type']
                 va = i['value']
                 if pt == 'message':
-                    self.userhandler(va)
+                    tt = threading.Thread(target=self.userhandler, args=(va,))
+                    tt.start()
                 elif pt == 'group_message':
-                    self.grouphandler(va)
+                    tt = threading.Thread(target=self.grouphandler, args=(va,))
+                    tt.start()
                 elif pt == 'ptwebqq': #TODO update cookie's file value
                     self.cookie.update({'ptwebqq':i['p']})
                 elif pt == 'buddies_status_change':
