@@ -68,7 +68,7 @@ class Webqq(QQlogin):
             logger.warn('You do not have no markname')
 
     def get_login_info(self):
-        INFO = 'info' #TODO
+        INFO = 'info' #TODO this file is not necessary now,we can use logout method to avoid it.
         url = "http://d.web2.qq.com/channel/login2"
         self._headers.update({"Referer":"http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2"})
         status = {'status':'online',
@@ -131,10 +131,7 @@ class Webqq(QQlogin):
                 }
             res = self._request(url=url, data=data)
             if res:
-                try:
-                    self.__pollhandler(res)
-                except: #TODO
-                    pass
+                threading.Thread(target=self.__pollhandler, args=(res,)).start()
     
     def __pollhandler(self, data):
         for i in data:
@@ -142,11 +139,9 @@ class Webqq(QQlogin):
                 pt = i['poll_type']
                 va = i['value']
                 if pt == 'message':
-                    tt = threading.Thread(target=self.userhandler, args=(va,))
-                    tt.start()
+                    self.userhandler(va)
                 elif pt == 'group_message':
-                    tt = threading.Thread(target=self.grouphandler, args=(va,))
-                    tt.start()
+                    self.grouphandler(va)
                 elif pt == 'ptwebqq': #TODO update cookie's file value
                     self.cookie.update({'ptwebqq':i['p']})
                 elif pt == 'buddies_status_change':
