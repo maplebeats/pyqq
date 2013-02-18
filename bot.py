@@ -25,7 +25,7 @@ class Computer:
     '''
     just for my computer
     run commands or timing to complete tasks
-    Windows XP and Arch64(sudo had no password)
+    Windows XP and Arch64(sudo without password)
     TODO: XP support
     '''
 

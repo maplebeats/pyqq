@@ -26,9 +26,8 @@ class Webqq(QQlogin):
         else:
             self._verifycode = self._getverifycode()
             self.pswd = self._preprocess(self._pw, self._verifycode)
-            self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid=%s"%(self.appid)+"&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001"})
-            url = "http://ptlogin2.qq.com/login?u=%s&p=%s&verifycode=%s&aid=%s"%(self.qq,self.pswd,self._verifycode[1],self.appid)\
-            + "&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1"
+            self._headers.update({"Referer":"http://ui.ptlogin2.qq.com/cgi-bin/login?target=self&style=5&mibao_css=m_webqq&appid={0}&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20121029001".format(self.appid)})
+            url = "http://ptlogin2.qq.com/login?u={0}&p={1}&verifycode={2}&aid={3}&u1=http%3A%2F%2Fweb.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=3-25-30079&mibao_css=m_webqq&t=1&g=1".format(self.qq, self.pswd, self._verifycode[1], self.appid)
             res = self._request(url=url, cookie=True)
             if res.find("成功") != -1:
                 pass
@@ -113,7 +112,7 @@ class Webqq(QQlogin):
         info = []
         for i in res['gnamelist']:
             ginfo.update({i['gid']:i['name']})
-            url = "http://s.web2.qq.com/api/get_group_info_ext2?gcode=%s&vfwebqq=%s&t=%s" % (i['code'],self._login_info['vfwebqq'],random.randrange(1345457600000,1345458000000))
+            url = "http://s.web2.qq.com/api/get_group_info_ext2?gcode={0}&vfwebqq={1}&t={2}".format(i['code'], self._login_info['vfwebqq'], random.randrange(1345457600000,1345458000000))
             res = self._request(url)
             info.append(res)
         return ginfo, info
@@ -196,7 +195,7 @@ class Webqq(QQlogin):
         return res
 
     def logout(self):
-        url =  'http://d.web2.qq.com/channel/logout2?ids&clientid=%s&psessionid=%s&t=%s' % (self.clientid, self._login_info['psessionid'], random.randrange(1345457600000,1345458000000))
+        url =  'http://d.web2.qq.com/channel/logout2?ids&clientid={0}&psessionid={1}&t={2}'.format(self.clientid, self._login_info['psessionid'], random.randrange(1345457600000,1345458000000))
         res = self._request(url)
         if res == 'ok':
             logger.info('logout success!')
