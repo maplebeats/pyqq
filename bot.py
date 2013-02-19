@@ -31,12 +31,16 @@ class Computer:
 
     def __init__(self):
         self.platform = platform.system()
-        self.mods = {'shutdown':['关机', 'poweroff'], 'reboot':['重启', 'reboot'], 'timeout':['延时', 'delay', '后'], 'notify':['提醒', 'notify']}
+        self.mods = {}
 
     def run(self, con):
         '''
         check then commands and run it
         '''
+        if con == 'shutdown':
+            return self.shutdown()
+        elif con == 'reboot':
+            return self.reboot()
         return self.notify(con)
 
     def commands(self, *coms):
@@ -177,14 +181,13 @@ class Bot:
 
 
 class Qbot(Webqq):
+    link = re.compile(r'(?:http[s]?://)?([a-z]{1,8}\.?.*\.[a-z]{2,5}[a-z/]*)', re.I)
+    commod = {} #command mode  TODO 多人控制模式！用字典来储存每人的mode
 
     def __init__(self, qq, ps):
         super(Qbot, self).__init__(qq, ps)
         self.bot = Bot()
         self.computer = Computer()
-        self.link = re.compile(r'(?:http[s]?://)?([a-z]{1,8}\.?.*\.[a-z]{2,5}[a-z/]*)', re.I)
-        self.commands = ('关机', '重启', '消息', '命令', '延时', '间隔')
-        self.commod = {} #command mode  TODO 多人控制模式！用字典来储存每人的mode
 
     def grouphandler(self, data):
         if gcfg[0]:
